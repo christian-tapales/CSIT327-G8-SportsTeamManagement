@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Player
+from django.contrib.auth.decorators import login_required
+
 
 # -------------------------------
 # Login / Logout Views
@@ -31,7 +33,8 @@ def logout_view(request):
 # -------------------------------
 # Coach Dashboard View
 # -------------------------------
+@login_required(login_url="login")
 def coach_dashboard(request):
-    # If Player.coach is a ForeignKey to User, this works:
     players = Player.objects.filter(coach=request.user)
     return render(request, 'coach_dashboard.html', {'players': players})
+

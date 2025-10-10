@@ -1,20 +1,21 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Sports Team Management</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'styles/login.css' %}">
 </head>
 <body>
     <div class="login-container">
         <h2>Login</h2>
-        <form method="POST">
+        <form method="POST" action="{% url 'login' %}">
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit">Login</button>
         </form>
         {% if form.errors %}
-            <p style="color:red;">Invalid username or password</p>
+            <p class="error">Invalid credentials. Try again.</p>
         {% endif %}
     </div>
 </body>

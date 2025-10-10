@@ -1,7 +1,12 @@
 from django.contrib import admin
-from django.urls import path, include  # include lets you reference app URLs
+from django.urls import path, include
+from django.http import HttpResponseRedirect
+
+def home_redirect(request):
+    return HttpResponseRedirect("/coach/login/")
 
 urlpatterns = [
+    path('', home_redirect, name='home'),
     path('admin/', admin.site.urls),
-    path('coach/', include('coach.urls')),  # Routes /coach/ to coach app URLs
+    path('coach/', include('coach.urls')),
 ]
