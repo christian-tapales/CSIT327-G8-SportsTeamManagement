@@ -1,15 +1,27 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Coach Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Coach Dashboard</title>
+  <link rel="stylesheet" href="{% static 'styles/dashboard.css' %}">
 </head>
 <body>
-    <h1>Coach Dashboard</h1>
-    <h2>Players List</h2>
-    <ul>
+  <div class="dashboard-container">
+    <h1>Welcome, Coach {{ request.user.username }}!</h1>
+    <p>Here are your players:</p>
+
+    {% if players %}
+      <ul>
         {% for player in players %}
-            <li>{{ player.name }} - {{ player.position }}</li>
+          <li>{{ player.name }} - {{ player.position }}</li>
         {% endfor %}
-    </ul>
+      </ul>
+    {% else %}
+      <p>No players added yet.</p>
+    {% endif %}
+
+    <a href="{% url 'logout' %}">Logout</a>
+  </div>
 </body>
 </html>

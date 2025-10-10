@@ -4,7 +4,6 @@ from django.contrib.auth.forms import AuthenticationForm
 from .models import Player
 from django.contrib.auth.decorators import login_required
 
-
 # -------------------------------
 # Login / Logout Views
 # -------------------------------
@@ -17,7 +16,7 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect("dashboard")  # Redirect to dashboard
+                return redirect("coach_dashboard")  # ✅ updated redirect target
             else:
                 form.add_error(None, "Invalid username or password")
         else:
@@ -37,4 +36,3 @@ def logout_view(request):
 def coach_dashboard(request):
     players = Player.objects.filter(coach=request.user)
     return render(request, 'coach_dashboard.html', {'players': players})
-
