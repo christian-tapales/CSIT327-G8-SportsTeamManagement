@@ -24,19 +24,25 @@ This project simplifies organizing players, creating teams, scheduling matches, 
 
 ---
 
-👨‍💻 Team Members
-Name	                                   Role	                        CIT-U Email
-Frances Lghe Unabia	                    Developer	                frances.unabia@cit.edu
+## 👨‍💻 Team Members
 
-Riggy Maryl Yungco	                    Developer	                riggymaryl.yungco@cit.edu
+| Name | Role | CIT-U Email |
+|------|------|--------------|
+| **Frances Lghe Unabia** | Developer | frances.unabia@cit.edu |
+| **Riggy Maryl Yungco** | Developer | riggy.yungco@cit.edu |
+| **Serge Ylan Soldano** | Developer | serge.soldano@cit.edu |
+| **Christian Kyle Tapales** | Product Owner | christiankyle.tapales@cit.edu |
+| **Jhon Nichole Brosas Tampos** | Scrum Master | jhonnichole.tampos@cit.edu |
+| **Arcelyn Silvano Tequillo** | Business Analyst | arcelyn.tequillo@cit.edu |
 
-Serge Ylan Soldano	                    Developer	                sergeylan.soldano@cit.edu
+---
 
-Christian Kyle Tapales	                Product Owner	            christiankyle.tapales@cit.edu
+## ⚙️ Setup & Run Instructions
 
-Jhon Nichole Brosas Tampos	            Scrum Master	            jhonnichole.tampos@cit.edu
-
-Arcelyn Silvano Tequillo	            Business Analyst	        arcelyn.tequillo@cit.edu
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/christian-tapales/CSIT327-G8-SportsTeamManagement.git
+cd CSIT327-G8-SportsTeamManagement
 
 ---
 
