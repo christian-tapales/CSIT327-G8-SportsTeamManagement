@@ -5,37 +5,73 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sports Team Management | Login</title>
-  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
 
-  <div class="login-card">
-    <h1>Sports Team Management</h1>
-    <p class="subtitle">Sign in to manage your teams and players</p>
+  <main class="w-full max-w-md">
+    <div class="bg-white shadow-xl rounded-2xl p-8">
+      <h1 class="text-2xl font-semibold text-center">Sports Team Management</h1>
+      <p class="text-sm text-gray-500 text-center mt-1">
+        Sign in to manage your teams and players
+      </p>
 
-    <div class="tab">
-      <button class="active">Sign In</button>
-      <button class="inactive">Sign Up</button>
+      <!-- Tabs -->
+      <div class="mt-6 flex gap-6 border-b">
+        <a href="{% url 'login' %}"
+           class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'login' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
+          Sign In
+        </a>
+        <a href="{% url 'register' %}"
+           class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'register' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
+          Sign Up
+        </a>
+      </div>
+
+      <!-- Messages -->
+      {% if messages %}
+        <ul class="mt-4 space-y-2">
+          {% for m in messages %}
+            <li class="text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">{{ m }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if error %}
+        <div class="mt-4 text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">
+          {{ error }}
+        </div>
+      {% elif form.errors %}
+        <div class="mt-4 text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">
+          Invalid email/username or password.
+        </div>
+      {% endif %}
+
+      <!-- Login Form -->
+      <form method="POST" action="{% url 'login' %}" class="mt-6 space-y-4" novalidate>
+        {% csrf_token %}
+
+        <label class="block">
+          <span class="text-sm font-medium">Email or Username</span>
+          <input name="username" type="text" placeholder="Enter your email or username"
+                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                 required />
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium">Password</span>
+          <input name="password" type="password" placeholder="Enter your password"
+                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                 required />
+        </label>
+
+        <button type="submit"
+                class="w-full mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-white font-medium hover:bg-black">
+          Sign In
+        </button>
+      </form>
     </div>
-
-    <form method="POST" action="{% url 'login' %}">
-      {% csrf_token %}
-
-      <label for="username">Email or Username</label>
-      <input type="text" id="username" name="username" placeholder="Enter your email or username" required>
-
-      <label for="password">Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" required>
-
-      <button type="submit" class="signin-btn">Sign In</button>
-    </form>
-
-    {% if error %}
-      <p class="error-message">{{ error }}</p>
-    {% elif form.errors %}
-      <p class="error-message">Invalid credentials. Please try again.</p>
-    {% endif %}
-  </div>
+  </main>
 
 </body>
 </html>

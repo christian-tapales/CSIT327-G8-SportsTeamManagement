@@ -18,7 +18,6 @@ DATABASES = {
     }
 }
 
-
 # ===========================
 # BASIC SETTINGS
 # ===========================
@@ -44,6 +43,9 @@ INSTALLED_APPS = [
     'coach',
 ]
 
+# ===========================
+# MIDDLEWARE
+# ===========================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -54,6 +56,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ===========================
+# URL & WSGI
+# ===========================
 ROOT_URLCONF = 'team_mgmt.urls'
 WSGI_APPLICATION = 'team_mgmt.wsgi.application'
 
