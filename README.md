@@ -28,9 +28,9 @@ This project simplifies organizing players, creating teams, scheduling matches, 
 Name	                                   Role	                        CIT-U Email
 Frances Lghe Unabia	                    Developer	                frances.unabia@cit.edu
 
-Riggy Maryl Yungco	                    Developer	                riggy.yungco@cit.edu
+Riggy Maryl Yungco	                    Developer	                riggymaryl.yungco@cit.edu
 
-Serge Ylan Soldano	                    Developer	                serge.soldano@cit.edu
+Serge Ylan Soldano	                    Developer	                sergeylan.soldano@cit.edu
 
 Christian Kyle Tapales	                Product Owner	            christiankyle.tapales@cit.edu
 
