@@ -45,23 +45,29 @@ git clone https://github.com/christian-tapales/CSIT327-G8-SportsTeamManagement.g
 cd CSIT327-G8-SportsTeamManagement
 
 ### 2️⃣ Create and activate a virtual environment
+```bash
 python -m venv venv
 venv\Scripts\activate   # On Windows
 source venv/bin/activate  # On Mac/Linux
 
 ### 3️⃣ Install project dependencies
+```bash
 pip install -r requirements.txt
 
 ### 4️⃣ Create a .env file (if not yet existing)
+```bash
 # Add your Supabase or PostgreSQL credentials, e.g.:
 DATABASE_URL=postgresql://username:password@host:port/dbname
 SECRET_KEY=your_django_secret_key
 
 ### 5️⃣ Apply database migrations
+```bash
 python manage.py migrate
 
 ### 6️⃣ Run the development server
+```bash
 python manage.py runserver
 
 ### 7️⃣ Open your browser and go to:
+```bash
 http://127.0.0.1:8000/
