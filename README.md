@@ -44,32 +44,24 @@ This project simplifies organizing players, creating teams, scheduling matches, 
 git clone https://github.com/christian-tapales/CSIT327-G8-SportsTeamManagement.git
 cd CSIT327-G8-SportsTeamManagement
 
----
-
-## ⚙️ Setup & Run Instructions
-
-# 1️⃣ Clone the repository
-git clone https://github.com/christian-tapales/CSIT327-G8-SportsTeamManagement.git
-cd CSIT327-G8-SportsTeamManagement
-
-# 2️⃣ Create and activate a virtual environment
+### 2️⃣ Create and activate a virtual environment
 python -m venv venv
 venv\Scripts\activate   # On Windows
 source venv/bin/activate  # On Mac/Linux
 
-# 3️⃣ Install project dependencies
+### 3️⃣ Install project dependencies
 pip install -r requirements.txt
 
-# 4️⃣ Create a .env file (if not yet existing)
+### 4️⃣ Create a .env file (if not yet existing)
 # Add your Supabase or PostgreSQL credentials, e.g.:
-# DATABASE_URL=postgresql://username:password@host:port/dbname
-# SECRET_KEY=your_django_secret_key
+DATABASE_URL=postgresql://username:password@host:port/dbname
+SECRET_KEY=your_django_secret_key
 
-# 5️⃣ Apply database migrations
+### 5️⃣ Apply database migrations
 python manage.py migrate
 
-# 6️⃣ Run the development server
+### 6️⃣ Run the development server
 python manage.py runserver
 
-# 7️⃣ Open your browser and go to:
-# http://127.0.0.1:8000/
+### 7️⃣ Open your browser and go to:
+http://127.0.0.1:8000/
