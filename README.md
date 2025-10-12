@@ -24,9 +24,46 @@ This project simplifies organizing players, creating teams, scheduling matches, 
 
 ---
 
+👨‍💻 Team Members
+Name	                                   Role	                        CIT-U Email
+Frances Lghe Unabia	                    Developer	                frances.unabia@cit.edu
+
+Riggy Maryl Yungco	                    Developer	                riggy.yungco@cit.edu
+
+Serge Ylan Soldano	                    Developer	                serge.soldano@cit.edu
+
+Christian Kyle Tapales	                Product Owner	            christiankyle.tapales@cit.edu
+
+Jhon Nichole Brosas Tampos	            Scrum Master	            jhonnichole.tampos@cit.edu
+
+Arcelyn Silvano Tequillo	            Business Analyst	        arcelyn.tequillo@cit.edu
+
+---
+
 ## ⚙️ Setup & Run Instructions
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/christian-tapales/Sports-Team-Management.git
-cd Sports-Team-Management
+# 1️⃣ Clone the repository
+git clone https://github.com/christian-tapales/CSIT327-G8-SportsTeamManagement.git
+cd CSIT327-G8-SportsTeamManagement
+
+# 2️⃣ Create and activate a virtual environment
+python -m venv venv
+venv\Scripts\activate   # On Windows
+source venv/bin/activate  # On Mac/Linux
+
+# 3️⃣ Install project dependencies
+pip install -r requirements.txt
+
+# 4️⃣ Create a .env file (if not yet existing)
+# Add your Supabase or PostgreSQL credentials, e.g.:
+# DATABASE_URL=postgresql://username:password@host:port/dbname
+# SECRET_KEY=your_django_secret_key
+
+# 5️⃣ Apply database migrations
+python manage.py migrate
+
+# 6️⃣ Run the development server
+python manage.py runserver
+
+# 7️⃣ Open your browser and go to:
+# http://127.0.0.1:8000/
