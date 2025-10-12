@@ -18,7 +18,6 @@ DATABASES = {
 
 
 
-
 # Quick-start settings
 SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
 DEBUG = True
