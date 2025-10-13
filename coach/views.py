@@ -7,6 +7,16 @@ from django.contrib.auth.decorators import login_required
 from .models import Player, Team
 
 # -------------------------------
+# Landing Page View
+# -------------------------------
+def landing_page(request):
+    """
+    Displays the home landing page with buttons for Login and Register.
+    """
+    return render(request, "auth/landing_page.html")
+
+
+# -------------------------------
 # Login View
 # -------------------------------
 def login_view(request):
@@ -43,6 +53,7 @@ def login_view(request):
             return render(request, "auth/login.html")
 
     return render(request, "auth/login.html")
+
 
 # -------------------------------
 # Coach Dashboard View
@@ -87,6 +98,7 @@ def coach_dashboard(request):
             "sport_choices": Team.SPORT_CHOICES,
         },
     )
+
 
 # -------------------------------
 # Register View (create user → login → go dashboard)
