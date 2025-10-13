@@ -4,6 +4,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 from .models import Player, Team
 
 # -------------------------------
@@ -85,6 +88,8 @@ def coach_dashboard(request):
             )
             messages.success(request, f"Team “{name}” created.")
             return redirect("coach_dashboard")  # ✅ fixed redirect
+            messages.success(request, f'Team "{name}" created.')
+            return redirect("dashboard")  # Post/Redirect/Get to avoid resubmis
 
     teams = Team.objects.filter(coach=request.user)
     players = Player.objects.filter(coach=request.user)
@@ -120,6 +125,13 @@ def register_view(request):
         # --- validations ---
         if not all([username, first_name, last_name, email, password1, password2]):
             messages.error(request, "Please fill in all fields.")
+            return render(request, "auth/register.html")
+
+        # Validate email format
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, "Please enter a valid email address (e.g., user@example.com).")
             return render(request, "auth/register.html")
 
         if password1 != password2:

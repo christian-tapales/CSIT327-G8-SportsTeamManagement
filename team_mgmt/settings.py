@@ -29,6 +29,7 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.43.122"]
 
+
 # ===========================
 # APPLICATIONS
 # ===========================
@@ -46,6 +47,12 @@ INSTALLED_APPS = [
 # ===========================
 # MIDDLEWARE
 # ===========================
+# Quick-start settings
+SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
+DEBUG = True
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+# Required middleware for Django admin
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
