@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,15 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
 from .models import Player, Team
+
+# -------------------------------
+# Landing Page View
+# -------------------------------
+def landing_page(request):
+    """
+    Displays the home landing page with buttons for Login and Register.
+    """
+    return render(request, "auth/landing_page.html")
 
 
 # -------------------------------
@@ -18,7 +28,7 @@ def login_view(request):
     """
     if request.method == "POST":
         identifier = (request.POST.get("username") or "").strip()
-        password   = (request.POST.get("password") or "")
+        password = (request.POST.get("password") or "")
 
         actual_username = None
 
@@ -28,7 +38,7 @@ def login_view(request):
             if u:
                 actual_username = u.username
 
-        # Otherwise try as username, or fall back to email lookup
+        # Otherwise, try as username or fallback to email lookup
         if not actual_username:
             if User.objects.filter(username__iexact=identifier).exists():
                 actual_username = identifier
@@ -40,10 +50,10 @@ def login_view(request):
         user = authenticate(request, username=actual_username or "", password=password)
         if user is not None:
             login(request, user)
-            return redirect("dashboard")
-
-        messages.error(request, "Invalid credentials. Check your email/username and password.")
-        return render(request, "auth/login.html")
+            return redirect("coach_dashboard")  # ✅ redirect to dashboard
+        else:
+            messages.error(request, "Invalid credentials. Check your email/username and password.")
+            return render(request, "auth/login.html")
 
     return render(request, "auth/login.html")
 
@@ -52,7 +62,7 @@ def login_view(request):
 # Coach Dashboard View
 # (GET: show teams / POST: create team)
 # -------------------------------
-@login_required(login_url='login')
+@login_required(login_url="login")
 def coach_dashboard(request):
     """
     GET  -> show dashboard with user's teams
@@ -60,8 +70,8 @@ def coach_dashboard(request):
     Template: team_mgmt/templates/team_mgmt/coach_dashboard.html
     """
     if request.method == "POST":
-        name   = (request.POST.get("team_name") or "").strip()
-        sport  = (request.POST.get("sport") or "").strip()
+        name = (request.POST.get("team_name") or "").strip()
+        sport = (request.POST.get("sport") or "").strip()
         season = (request.POST.get("season") or "").strip()
 
         valid_sports = {code for code, _ in Team.SPORT_CHOICES}
@@ -76,8 +86,10 @@ def coach_dashboard(request):
                 sport=sport,
                 season=season
             )
+            messages.success(request, f"Team “{name}” created.")
+            return redirect("coach_dashboard")  # ✅ fixed redirect
             messages.success(request, f'Team "{name}" created.')
-            return redirect("dashboard")  # Post/Redirect/Get to avoid resubmits
+            return redirect("dashboard")  # Post/Redirect/Get to avoid resubmis
 
     teams = Team.objects.filter(coach=request.user)
     players = Player.objects.filter(coach=request.user)
@@ -103,12 +115,12 @@ def register_view(request):
     Template: coach/templates/auth/register.html
     """
     if request.method == "POST":
-        username   = (request.POST.get("username") or "").strip()
+        username = (request.POST.get("username") or "").strip()
         first_name = (request.POST.get("first_name") or "").strip()
-        last_name  = (request.POST.get("last_name") or "").strip()
-        email      = (request.POST.get("email") or "").strip().lower()
-        password1  = request.POST.get("password1") or ""
-        password2  = request.POST.get("password2") or ""
+        last_name = (request.POST.get("last_name") or "").strip()
+        email = (request.POST.get("email") or "").strip().lower()
+        password1 = request.POST.get("password1") or ""
+        password2 = request.POST.get("password2") or ""
 
         # --- validations ---
         if not all([username, first_name, last_name, email, password1, password2]):
@@ -148,6 +160,6 @@ def register_view(request):
         )
 
         login(request, user)
-        return redirect("dashboard")
+        return redirect("coach_dashboard")
 
     return render(request, "auth/register.html")

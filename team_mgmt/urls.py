@@ -5,5 +5,5 @@ from coach import views  # import your landing page view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('coach/', include('coach.urls')),
-    path('', views.landing_page, name='landing_page'),  # 👈 new default route
+    path('', views.landing_page, name='landing_page'),  # landing page as root URL
 ]
