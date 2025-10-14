@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-import dj_database_url
+# import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -12,10 +12,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # DATABASE CONFIGURATION
 # ===========================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+  'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': 'postgres',
+    'USER': 'collabsports',
+    'PASSWORD': 'TestPass123',
+    'HOST': 'db.optirptpfjpyddemxpsg.supabase.co',
+    'PORT': '5432',
+    'OPTIONS': {'sslmode': 'require'},
+  }
 }
 
 # ===========================
