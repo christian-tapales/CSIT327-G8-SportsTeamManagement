@@ -6,4 +6,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('coach/', include('coach.urls')),
     path('', views.landing_page, name='landing_page'),  # 👈 show landing page at root URL
+    path('', views.landing_page, name='landing_page'),  # landing page as root URL
 ]

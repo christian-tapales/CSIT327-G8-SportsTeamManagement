@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-import dj_database_url
+# import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -20,6 +20,15 @@ DATABASES = {
         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
         'PORT': '5432',
     }
+  'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': 'postgres',
+    'USER': 'collabsports',
+    'PASSWORD': 'TestPass123',
+    'HOST': 'db.optirptpfjpyddemxpsg.supabase.co',
+    'PORT': '5432',
+    'OPTIONS': {'sslmode': 'require'},
+  }
 }
 
 
