@@ -9,14 +9,19 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ===========================
-# DATABASE CONFIGURATION
+# DATABASE CONFIGURATION (Supabase)
 # ===========================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',  # <--- only 'postgres', not 'postgres.optirptpfjpyddemxpsg'
+        'PASSWORD': 'collabsportsmanagement',
+        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
+        'PORT': '5432',
     }
 }
+
 
 # ===========================
 # BASIC SETTINGS
@@ -29,14 +34,11 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.43.122"]
 
-<<<<<<< HEAD
 # Quick-start settings
 SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
 DEBUG = True
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
-# Required middleware for Django admin
-=======
 # ===========================
 # APPLICATIONS
 # ===========================
@@ -54,7 +56,6 @@ INSTALLED_APPS = [
 # ===========================
 # MIDDLEWARE
 # ===========================
->>>>>>> feature/landing-page
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
