@@ -6,19 +6,19 @@ from .models import Player, Team
 # -------------------------------
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display  = ("name", "sport", "season", "coach", "created_at")
-    list_filter   = ("sport", "season", "coach")
+    list_display  = ("name", "coach", "status", "location", "created_at")
+    list_filter   = ("status", "coach")
     search_fields = (
-        "name", "season",
-        "coach__username", "coach__email", "coach__first_name", "coach__last_name"
+        "name", "coach__username", "coach__email",
+        "coach__first_name", "coach__last_name"
     )
-    ordering      = ("-created_at",)
+    ordering = ("-created_at",)
 
-    # Optional: default coach to the logged-in admin when creating a team
     def save_model(self, request, obj, form, change):
         if not change and not obj.coach_id:
             obj.coach = request.user
         super().save_model(request, obj, form, change)
+
 
 # -------------------------------
 # Player in Admin

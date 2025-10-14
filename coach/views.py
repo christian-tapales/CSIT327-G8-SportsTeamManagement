@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from .models import Player, Team, CoachProfile 
 
 from .models import Player, Team
 
@@ -64,32 +65,27 @@ def login_view(request):
 # -------------------------------
 @login_required(login_url="login")
 def coach_dashboard(request):
-    """
-    GET  -> show dashboard with user's teams
-    POST -> create a Team from modal form (team_name, sport, season)
-    Template: team_mgmt/templates/team_mgmt/coach_dashboard.html
-    """
+    coach_profile = CoachProfile.objects.filter(user=request.user).first()
+
     if request.method == "POST":
         name = (request.POST.get("team_name") or "").strip()
-        sport = (request.POST.get("sport") or "").strip()
-        season = (request.POST.get("season") or "").strip()
+        location = (request.POST.get("location") or "").strip()
+        max_players_allowed = request.POST.get("max_players_allowed") or 0
+        status = request.POST.get("status") or "Active"
 
-        valid_sports = {code for code, _ in Team.SPORT_CHOICES}
-        if not name or not sport:
-            messages.error(request, "Team name and sport are required.")
-        elif sport not in valid_sports:
-            messages.error(request, "Please choose a valid sport.")
+        if not name:
+            messages.error(request, "Team name is required.")
         else:
             Team.objects.create(
                 coach=request.user,
                 name=name,
-                sport=sport,
-                season=season
+                sport=coach_profile.sport if coach_profile else "",  # auto-fill from profile
+                location=location,
+                max_players_allowed=max_players_allowed,
+                status=status,
             )
-            messages.success(request, f"Team “{name}” created.")
-            return redirect("coach_dashboard")  # ✅ fixed redirect
-            messages.success(request, f'Team "{name}" created.')
-            return redirect("dashboard")  # Post/Redirect/Get to avoid resubmis
+            messages.success(request, f"Team “{name}” created successfully.")
+            return redirect("coach_dashboard")
 
     teams = Team.objects.filter(coach=request.user)
     players = Player.objects.filter(coach=request.user)
@@ -100,9 +96,10 @@ def coach_dashboard(request):
         {
             "players": players,
             "teams": teams,
-            "sport_choices": Team.SPORT_CHOICES,
+            "coach_profile": coach_profile,
         },
     )
+
 
 
 # -------------------------------
@@ -110,9 +107,9 @@ def coach_dashboard(request):
 # -------------------------------
 def register_view(request):
     """
-    Expects: username, first_name, last_name, email, password1, password2
-    On success: auto-login and redirect to 'dashboard'
-    Template: coach/templates/auth/register.html
+    Register a new coach with a chosen sport.
+    Expects: username, first_name, last_name, email, password1, password2, sport
+    On success: auto-login and redirect to dashboard
     """
     if request.method == "POST":
         username = (request.POST.get("username") or "").strip()
@@ -121,36 +118,37 @@ def register_view(request):
         email = (request.POST.get("email") or "").strip().lower()
         password1 = request.POST.get("password1") or ""
         password2 = request.POST.get("password2") or ""
+        sport = (request.POST.get("sport") or "").strip()  # ✅ new
 
         # --- validations ---
-        if not all([username, first_name, last_name, email, password1, password2]):
-            messages.error(request, "Please fill in all fields.")
-            return render(request, "auth/register.html")
+        if not all([username, first_name, last_name, email, password1, password2, sport]):
+            messages.error(request, "Please fill in all fields, including sport.")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
         # Validate email format
         try:
             validate_email(email)
         except ValidationError:
             messages.error(request, "Please enter a valid email address (e.g., user@example.com).")
-            return render(request, "auth/register.html")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
-            return render(request, "auth/register.html")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
         if len(password1) < 8:
             messages.error(request, "Password must be at least 8 characters.")
-            return render(request, "auth/register.html")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
         if User.objects.filter(username__iexact=username).exists():
             messages.error(request, "Username is already taken.")
-            return render(request, "auth/register.html")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
         if User.objects.filter(email__iexact=email).exists():
             messages.error(request, "An account with that email already exists.")
-            return render(request, "auth/register.html")
+            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
-        # --- create user with chosen username ---
+        # --- create user ---
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -159,7 +157,11 @@ def register_view(request):
             password=password1
         )
 
+        # create CoachProfile with sport
+        CoachProfile.objects.create(user=user, sport=sport)
+
         login(request, user)
         return redirect("coach_dashboard")
 
-    return render(request, "auth/register.html")
+    # GET request
+    return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
