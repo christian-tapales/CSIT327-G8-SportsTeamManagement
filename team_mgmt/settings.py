@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 # import dj_database_url
 from dotenv import load_dotenv
-
 # Load environment variables
 load_dotenv()
 
@@ -11,6 +10,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ===========================
 # DATABASE CONFIGURATION
 # ===========================
+
+
 DATABASES = {
   'default': {
     'ENGINE': 'django.db.backends.postgresql',
