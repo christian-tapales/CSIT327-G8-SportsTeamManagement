@@ -63,10 +63,13 @@ def login_view(request):
 # -------------------------------
 @login_required(login_url="login")
 def coach_dashboard(request):
+
+
     """
     GET  -> show dashboard with user's teams
     POST -> create a Team from modal form (team_name, sport, season)
     """
+
     coach_profile = CoachProfile.objects.filter(user=request.user).first()
 
     if request.method == "POST":
@@ -86,8 +89,11 @@ def coach_dashboard(request):
                 max_players_allowed=max_players_allowed,
                 status=status,
             )
+
+
             messages.success(request, f'Team "{name}" created successfully!')
             return redirect("coach_dashboard")  # ✅ clean redirect after POST
+
             messages.success(request, f"Team “{name}” created successfully.")
             return redirect("coach_dashboard")
 
@@ -111,7 +117,9 @@ def coach_dashboard(request):
 # -------------------------------
 def register_view(request):
     """
+
     Expects: username, first_name, last_name, email, password1, password2
+
     Register a new coach with a chosen sport.
     Expects: username, first_name, last_name, email, password1, password2, sport
     On success: auto-login and redirect to dashboard
@@ -133,8 +141,11 @@ def register_view(request):
         try:
             validate_email(email)
         except ValidationError:
+
+
             messages.error(request, "Please enter a valid email address.")
             return render(request, "auth/register.html")
+
             messages.error(request, "Please enter a valid email address (e.g., user@example.com).")
             return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
@@ -154,7 +165,9 @@ def register_view(request):
             messages.error(request, "An account with that email already exists.")
             return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
+
         # --- create user and login ---
+
         # --- create user ---
         user = User.objects.create_user(
             username=username,
