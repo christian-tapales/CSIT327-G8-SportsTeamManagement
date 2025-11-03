@@ -1,53 +1,31 @@
 import os
 from pathlib import Path
-# import dj_database_url
-from dotenv import load_dotenv
-# Load environment variables
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ===========================
-# DATABASE CONFIGURATION (Supabase)
+# BASIC SETTINGS
 # ===========================
+SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
+DEBUG = True
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.43.122"]
 
-
+# ===========================
+# DATABASE CONFIGURATION (Supabase Pooler – Fixed Username)
+# ===========================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
-        'USER': 'postgres',  # <--- only 'postgres', not 'postgres.optirptpfjpyddemxpsg'
-        'PASSWORD': 'collabsportsmanagement',
-        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',
-        'PORT': '5432',
+        'USER': 'postgres.optirptpfjpyddemxpsg',  # ← Pooler format: postgres.[project-ref]
+        'PASSWORD': 'Cute.kaayoko1',  # ← Your DB password (reset if needed)
+        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',  # ← Region-specific pooler host
+        'PORT': '5432',  # Session mode for local dev
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
-  'default': {
-    'ENGINE': 'django.db.backends.postgresql',
-    'NAME': 'postgres',
-    'USER': 'collabsports',
-    'PASSWORD': 'TestPass123',
-    'HOST': 'db.optirptpfjpyddemxpsg.supabase.co',
-    'PORT': '5432',
-    'OPTIONS': {'sslmode': 'require'},
-  }
 }
-
-
-# ===========================
-# BASIC SETTINGS
-# ===========================
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f"
-)
-
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.43.122"]
-
-# Quick-start settings
-SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
-DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # ===========================
 # APPLICATIONS
@@ -66,12 +44,6 @@ INSTALLED_APPS = [
 # ===========================
 # MIDDLEWARE
 # ===========================
-# Quick-start settings
-SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
-DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-
-# Required middleware for Django admin
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
