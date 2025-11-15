@@ -7,8 +7,6 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .models import Player, Team, CoachProfile 
 
-from .models import Player, Team
-
 
 # -------------------------------
 # Landing Page View
@@ -63,8 +61,6 @@ def login_view(request):
 # -------------------------------
 @login_required(login_url="login")
 def coach_dashboard(request):
-
-
     """
     GET  -> show dashboard with user's teams
     POST -> create a Team from modal form (team_name, sport, season)
@@ -90,12 +86,8 @@ def coach_dashboard(request):
                 status=status,
             )
 
-
             messages.success(request, f'Team "{name}" created successfully!')
             return redirect("coach_dashboard")  # ✅ clean redirect after POST
-
-            messages.success(request, f"Team “{name}” created successfully.")
-            return redirect("coach_dashboard")
 
     teams = Team.objects.filter(coach=request.user)
     players = Player.objects.filter(coach=request.user)
@@ -111,15 +103,11 @@ def coach_dashboard(request):
     )
 
 
-
 # -------------------------------
 # Register View
 # -------------------------------
 def register_view(request):
     """
-
-    Expects: username, first_name, last_name, email, password1, password2
-
     Register a new coach with a chosen sport.
     Expects: username, first_name, last_name, email, password1, password2, sport
     On success: auto-login and redirect to dashboard
@@ -131,7 +119,7 @@ def register_view(request):
         email = (request.POST.get("email") or "").strip().lower()
         password1 = request.POST.get("password1") or ""
         password2 = request.POST.get("password2") or ""
-        sport = (request.POST.get("sport") or "").strip()  # ✅ new
+        sport = (request.POST.get("sport") or "").strip()
 
         # --- validations ---
         if not all([username, first_name, last_name, email, password1, password2, sport]):
@@ -141,11 +129,6 @@ def register_view(request):
         try:
             validate_email(email)
         except ValidationError:
-
-
-            messages.error(request, "Please enter a valid email address.")
-            return render(request, "auth/register.html")
-
             messages.error(request, "Please enter a valid email address (e.g., user@example.com).")
             return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
@@ -165,9 +148,6 @@ def register_view(request):
             messages.error(request, "An account with that email already exists.")
             return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
-
-        # --- create user and login ---
-
         # --- create user ---
         user = User.objects.create_user(
             username=username,
@@ -185,3 +165,31 @@ def register_view(request):
 
     # GET request
     return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+
+
+# -------------------------------
+# Team Detail View (Clickable Team Card - Overview)
+# -------------------------------
+@login_required(login_url="login")
+def team_detail(request, team_id):
+    """
+    Display detailed overview of a specific team.
+    Shows team info, players, and statistics.
+    """
+    try:
+        team = Team.objects.get(id=team_id, coach=request.user)
+    except Team.DoesNotExist:
+        messages.error(request, "Team not found or you don't have permission to view it.")
+        return redirect("coach_dashboard")
+    
+    # Filter players by coach (since Player model doesn't have team field)
+    players = Player.objects.filter(coach=request.user)
+    
+    return render(
+        request,
+        "team_mgmt/team_detail.html",
+        {
+            "team": team,
+            "players": players,
+        },
+    )

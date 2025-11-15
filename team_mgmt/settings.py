@@ -18,7 +18,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER': 'postgres.optirptpfjpyddemxpsg',  # ← Pooler format: postgres.[project-ref]
-        'PASSWORD': 'Cute.kaayoko1',  # ← Your DB password (reset if needed)
+        'PASSWORD': 'schoolsportsteammanagement',  # ← Your DB password (reset if needed)
         'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',  # ← Region-specific pooler host
         'PORT': '5432',  # Session mode for local dev
         'OPTIONS': {

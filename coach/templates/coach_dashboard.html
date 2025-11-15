@@ -82,8 +82,8 @@
         <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
 
           {% for t in teams %}
-  <!-- TEAM CARD — updated layout -->
-  <div class="rounded-2xl border bg-white p-6 shadow-sm">
+  <!-- TEAM CARD — clickable -->
+  <a href="{% url 'team_detail' t.id %}" class="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-md transition-shadow block">
     <!-- Title row -->
     <div class="flex items-center gap-2">
       <!-- trophy icon -->
@@ -125,7 +125,7 @@
         Created {{ t.created_at|date:"n/j/Y" }}
       </span>
     </div>
-  </div>
+  </a>
 {% endfor %}
 
         </div>

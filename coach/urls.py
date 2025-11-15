@@ -16,4 +16,7 @@ urlpatterns = [
 
     # Dashboard
     path('dashboard/', views.coach_dashboard, name='coach_dashboard'),
+    
+    # Team detail page
+    path('team/<int:team_id>/', views.team_detail, name='team_detail'),
 ]
