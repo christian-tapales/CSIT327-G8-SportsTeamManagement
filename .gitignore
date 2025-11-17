@@ -34,3 +34,6 @@ Thumbs.db
 # Python virtual environment
 venv310/
 .venv/
+
+# Environment files
+.env
