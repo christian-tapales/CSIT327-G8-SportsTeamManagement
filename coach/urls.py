@@ -19,4 +19,16 @@ urlpatterns = [
     
     # Team detail page
     path('team/<int:team_id>/', views.team_detail, name='team_detail'),
+    
+    # Edit team
+    path('team/<int:team_id>/edit/', views.edit_team, name='edit_team'),
+    
+    # Add player
+    path('team/<int:team_id>/add-player/', views.add_player, name='add_player'),
+    
+    # Edit player
+    path('team/<int:team_id>/player/<int:player_id>/edit/', views.edit_player, name='edit_player'),
+    
+    # Remove player
+    path('team/<int:team_id>/player/<int:player_id>/remove/', views.remove_player, name='remove_player'),
 ]
