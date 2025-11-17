@@ -1,26 +1,30 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ===========================
 # BASIC SETTINGS
 # ===========================
-SECRET_KEY = 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f'
-DEBUG = True
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.43.122"]
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-gna55k_3_8v#&-x_0)_oaa!f1vgf0wu56zy)rmlwru))%jp(9f')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,192.168.43.122').split(',')
 
 # ===========================
-# DATABASE CONFIGURATION (Supabase Pooler – Fixed Username)
+# DATABASE CONFIGURATION (Supabase Pooler)
 # ===========================
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.optirptpfjpyddemxpsg',  # ← Pooler format: postgres.[project-ref]
-        'PASSWORD': 'schoolsportsteammanagement',  # ← Your DB password (reset if needed)
-        'HOST': 'aws-1-ap-southeast-1.pooler.supabase.com',  # ← Region-specific pooler host
-        'PORT': '5432',  # Session mode for local dev
+        'NAME': os.getenv('DB_NAME', 'postgres'),
+        'USER': os.getenv('DB_USER', 'postgres.optirptpfjpyddemxpsg'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'schoolsportsteammanagement'),
+        'HOST': os.getenv('DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'),
+        'PORT': os.getenv('DB_PORT', '5432'),
         'OPTIONS': {
             'sslmode': 'require',
         },
@@ -46,6 +50,7 @@ INSTALLED_APPS = [
 # ===========================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,7 +111,15 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise configuration for serving static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # ===========================
 # DEFAULT AUTO FIELD
 # ===========================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===========================
+# CSRF TRUSTED ORIGINS (for production)
+# ===========================
+CSRF_TRUSTED_ORIGINS = os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:8000,http://localhost:8000').split(',')
