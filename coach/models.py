@@ -21,8 +21,12 @@ class CoachProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     sport = models.CharField(max_length=30, choices=SPORT_CHOICES)
 
+    # ⭐ ADD THIS
+    gender = models.CharField(max_length=10, null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.username} - {self.sport}"
+
 
 
 # ----------------------------
