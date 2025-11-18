@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-
 # ----------------------------
 # COACH PROFILE MODEL
 # ----------------------------
@@ -33,13 +32,13 @@ class CoachProfile(models.Model):
 
 
 # ----------------------------
-# PLAYER MODEL (MATCHES DATABASE)
+# PLAYER MODEL
 # ----------------------------
 class Player(models.Model):
     coach = models.ForeignKey(User, on_delete=models.CASCADE)
+    # We use "Team" in quotes because Team is defined further down in the file
     team = models.ForeignKey("Team", on_delete=models.CASCADE, null=True, blank=True)
 
-    # DB fields
     name = models.CharField(max_length=100)
     jersey_number = models.CharField(max_length=10, blank=True, null=True)
     position = models.CharField(max_length=50, blank=True, null=True)
@@ -49,6 +48,7 @@ class Player(models.Model):
     last_name = models.CharField(max_length=50, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
+
 
     # REQUIRED (prevents IntegrityError on insert)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -98,3 +98,28 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# ----------------------------
+# EVENT MODEL (Moved outside of Team)
+# ----------------------------
+class Event(models.Model):
+    EVENT_TYPES = [
+        ('Game', 'Game'),
+        ('Practice', 'Practice'),
+    ]
+
+    coach = models.ForeignKey(User, on_delete=models.CASCADE)
+    # We can use Team without quotes here because Team is defined above this class
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
+    date = models.DateField()
+    time = models.TimeField()
+    location = models.CharField(max_length=200)
+    opponent = models.CharField(max_length=200, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.date}"

@@ -1,3 +1,5 @@
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -6,6 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .models import Player, Team, CoachProfile 
+from .models import Event
+from django.utils import timezone
+from django.urls import reverse
+from .models import Player, Team, CoachProfile, Event
 
 
 # -------------------------------
@@ -50,7 +56,6 @@ def login_view(request):
 
     return render(request, "auth/login.html")
 
-
 # -------------------------------
 # Coach Dashboard
 # -------------------------------
@@ -59,6 +64,7 @@ def coach_dashboard(request):
 
     coach_profile = CoachProfile.objects.filter(user=request.user).first()
 
+    # --- 1. Handle Create Team Form ---
     if request.method == "POST":
         name = (request.POST.get("team_name") or "").strip()
         location = (request.POST.get("location") or "").strip()
@@ -76,11 +82,34 @@ def coach_dashboard(request):
                 max_players_allowed=max_players_allowed,
                 status=status,
             )
-
             messages.success(request, f'Team "{name}" created successfully!')
             return redirect("coach_dashboard")
 
+    # --- 2. Fetch Teams & Players ---
     teams = Team.objects.filter(coach=request.user)
+    all_players = Player.objects.filter(team__in=teams).select_related('team').order_by('team__name', 'last_name')
+
+    # --- 3. Fetch & Sort Events ---
+    today = timezone.now().date()
+    all_events = Event.objects.filter(coach=request.user).select_related('team')
+    
+    upcoming_events = all_events.filter(date__gte=today).order_by('date', 'time')
+    past_events = all_events.filter(date__lt=today).order_by('-date', '-time')
+
+    # --- 4. Prepare Data for Calendar (JSON) ⭐ THIS PART WAS MISSING ⭐ ---
+    events_json = []
+    for event in all_events:
+        events_json.append({
+            'id': event.id,
+            'title': event.title,
+            'date': event.date.strftime('%Y-%m-%d'), # Format YYYY-MM-DD
+            'time': event.time.strftime('%H:%M'),    # Format HH:MM
+            'type': event.event_type,
+            'location': event.location,
+            'opponent': event.opponent,
+            'notes': event.notes,
+            'team_id': event.team.id
+        })
 
     return render(
         request,
@@ -88,9 +117,12 @@ def coach_dashboard(request):
         {
             "teams": teams,
             "coach_profile": coach_profile,
+            "all_players": all_players,
+            "upcoming_events": upcoming_events,
+            "past_events": past_events,
+            "events_json": json.dumps(events_json, cls=DjangoJSONEncoder), # Pass JSON string to template
         },
     )
-
 
 # -------------------------------
 # Register View
@@ -158,9 +190,11 @@ def register_view(request):
 def team_detail(request, team_id):
 
     team = get_object_or_404(Team, id=team_id, coach=request.user)
-
-    # ✔ FIXED: Show only players assigned to this team
     players = Player.objects.filter(team=team)
+
+    # --- NEW: Get Practice Events for this specific team ---
+    # We filter by the team AND event_type="Practice", sorting by newest date first
+    practices = Event.objects.filter(team=team, event_type='Practice').order_by('-date', '-time')
 
     return render(
         request,
@@ -168,6 +202,7 @@ def team_detail(request, team_id):
         {
             "team": team,
             "players": players,
+            "practices": practices, # Pass this new list to the template
         },
     )
 
@@ -277,3 +312,95 @@ def remove_player(request, team_id, player_id):
         messages.success(request, f'Player "{player_name}" removed successfully!')
 
     return redirect("team_detail", team_id=team.id)
+
+#delete team
+def delete_team(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    
+    if request.method == "POST":
+        team_name = team.name
+        team.delete()
+        messages.success(request, f"Team '{team_name}' has been successfully removed.")
+        return redirect('coach_dashboard') # Redirects back to main dashboard
+    
+    # If someone tries to access this via GET, just send them back to the detail page
+    return redirect('team_detail', team_id=team_id)
+
+# -------------------------------
+# Add Event View
+# -------------------------------
+@login_required(login_url="login")
+def add_event(request):
+    if request.method == "POST":
+        # ... (keep your existing variable getting logic) ...
+        team_id = request.POST.get("team_id")
+        title = request.POST.get("title")
+        event_type = request.POST.get("event_type")
+        date = request.POST.get("date")
+        time = request.POST.get("time")
+        location = request.POST.get("location")
+        opponent = request.POST.get("opponent")
+        notes = request.POST.get("notes")
+
+        team = get_object_or_404(Team, id=team_id, coach=request.user)
+
+        Event.objects.create(
+            coach=request.user,
+            team=team,
+            title=title,
+            event_type=event_type,
+            date=date,
+            time=time,
+            location=location,
+            opponent=opponent,
+            notes=notes
+        )
+        messages.success(request, "Event scheduled successfully!")
+        
+        # ⭐ CHANGE THIS LINE ⭐
+        # Instead of just redirecting to the name, we build the URL and add ?tab=schedule
+        return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
+
+    return redirect("coach_dashboard")
+
+# -------------------------------
+# Edit Event
+# -------------------------------
+@login_required(login_url="login")
+def edit_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id, coach=request.user)
+    
+    if request.method == "POST":
+        event.title = request.POST.get("title")
+        event.event_type = request.POST.get("event_type")
+        event.date = request.POST.get("date")
+        event.time = request.POST.get("time")
+        event.location = request.POST.get("location")
+        event.opponent = request.POST.get("opponent")
+        event.notes = request.POST.get("notes")
+        
+        # Update team if changed
+        team_id = request.POST.get("team_id")
+        if team_id:
+            event.team = get_object_or_404(Team, id=team_id, coach=request.user)
+
+        event.save()
+        messages.success(request, "Event updated successfully!")
+        return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
+        
+    return redirect("coach_dashboard")
+
+# -------------------------------
+# Delete Event
+# -------------------------------
+@login_required(login_url="login")
+def delete_event(request, event_id):
+    event = get_object_or_404(Event, id=event_id, coach=request.user)
+    
+    if request.method == "POST":
+        event.delete()
+        messages.success(request, "Event removed successfully!")
+        return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
+        
+    return redirect("coach_dashboard")
+

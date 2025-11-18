@@ -31,4 +31,16 @@ urlpatterns = [
     
     # Remove player
     path('team/<int:team_id>/player/<int:player_id>/remove/', views.remove_player, name='remove_player'),
+
+    #delete
+    path('team/<int:team_id>/delete/', views.delete_team, name='delete_team'),
+
+    #addevent
+    path('event/add/', views.add_event, name='add_event'),
+
+    #editevent
+    path('event/<int:event_id>/edit/', views.edit_event, name='edit_event'),
+
+    #deleteevent
+    path('event/<int:event_id>/delete/', views.delete_event, name='delete_event'),
 ]
