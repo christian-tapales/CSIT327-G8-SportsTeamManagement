@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-  <!-- Header -->
   <header class="bg-white border-b">
     <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -19,21 +18,10 @@
           </p>
         </div>
       </div>
-      
-      <button id="openLogoutModal" type="button"
-              class="inline-flex items-center gap-2 bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-          <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
-        </svg>
-        <span>Sign Out</span>
-      </button>
     </div>
   </header>
 
-  <!-- Content -->
   <main class="flex-1 max-w-screen-2xl mx-auto px-6 py-8 w-full">
-    <!-- Back button -->
     <div class="mb-6">
       <a href="{% url 'coach_dashboard' %}" 
          class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900">
@@ -52,7 +40,6 @@
       </ul>
     {% endif %}
 
-    <!-- Team Header -->
     <div class="bg-white rounded-2xl border p-8 mb-6">
       <div class="flex items-start justify-between">
         <div>
@@ -110,18 +97,26 @@
           </div>
         </div>
         
-        <button id="openEditTeamModal" class="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          <span>Edit Team</span>
-        </button>
+        <div class="flex flex-col items-end gap-3">
+            <button id="openEditTeamModal" class="w-full inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span>Edit Team</span>
+            </button>
+            <button id="openRemoveTeamModal" class="w-full inline-flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+              <span>Remove Team</span>
+            </button>
+        </div>
       </div>
     </div>
 
-    <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      
       <div class="bg-white rounded-xl border p-6">
         <div class="flex items-center justify-between">
           <div>
@@ -129,12 +124,7 @@
             <p class="text-3xl font-bold mt-1">{{ players.count }}</p>
           </div>
           <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
         </div>
       </div>
@@ -146,12 +136,7 @@
             <p class="text-3xl font-bold mt-1">{{ team.max_players_allowed|default:"—" }}</p>
           </div>
           <div class="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
         </div>
       </div>
@@ -163,35 +148,29 @@
             <p class="text-2xl font-bold mt-1">{{ team.created_at|date:"M d, Y" }}</p>
           </div>
           <div class="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border p-6">
+      <div id="openPracticesModal" class="bg-white rounded-xl border p-6 cursor-pointer hover:shadow-md transition-shadow group">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-gray-600">Practices</p>
-            <p class="text-3xl font-bold mt-1">0</p>
+            <p class="text-sm text-gray-600 group-hover:text-orange-700 transition-colors">Practices</p>
+            <p class="text-3xl font-bold mt-1">{{ practices.count }}</p>
           </div>
           <div class="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- Players Section -->
     <div class="bg-white rounded-2xl border">
       <div class="px-6 py-5 border-b flex items-center justify-between">
         <div>
-          <h3 class="text-xl font-semibold">Team Roster</h3>
+          <h3 class="text-xl font-semibold">Team Players</h3>
           <p class="text-sm text-gray-500 mt-1">Manage your team's players</p>
         </div>
         <button id="openAddPlayerModal" class="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black">
@@ -222,28 +201,18 @@
                       {{ player.first_name.0|default:player.name.0 }}{{ player.last_name.0|default:"" }}
                     </div>
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900">
-                        {{ player.first_name|default:player.name }} {{ player.last_name|default:"" }}
-                      </div>
+                      <div class="text-sm font-medium text-gray-900">{{ player.first_name|default:player.name }} {{ player.last_name|default:"" }}</div>
                       {% if player.date_of_birth %}
                       <div class="text-sm text-gray-500">Age: {{ player.age }}</div>
                       {% endif %}
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ player.position|default:"—" }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  #{{ player.jersey_number|default:"—" }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ player.email|default:"—" }}
-                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ player.position|default:"—" }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ player.jersey_number|default:"—" }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ player.email|default:"—" }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
+                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button onclick='openEditPlayerModal({{ player.id }}, "{{ player.first_name|default:player.name|escapejs }}", "{{ player.last_name|default:""|escapejs }}", "{{ player.email|default:""|escapejs }}", "{{ player.jersey_number|default:""|escapejs }}", "{{ player.position|default:""|escapejs }}")' class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
@@ -259,444 +228,155 @@
           <div class="text-5xl mb-4">👥</div>
           <h4 class="text-lg font-semibold text-gray-900">No players yet</h4>
           <p class="text-gray-600 mt-2">Start building your roster by adding players to this team.</p>
-          <button id="openAddPlayerModalEmpty" class="mt-4 inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-black">
-            <span class="text-lg">＋</span>
-            <span>Add First Player</span>
-          </button>
         </div>
       {% endif %}
     </div>
   </main>
 
-  <!-- Edit Team Modal -->
-  <div id="editTeamModal" class="hidden fixed inset-0 bg-black/60 z-50">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div class="flex items-start justify-between px-6 py-5 border-b flex-shrink-0">
-          <div>
-            <h3 class="text-2xl font-semibold leading-6">Edit Team</h3>
-            <p class="mt-1 text-sm text-gray-500">Update team information</p>
-          </div>
-          <button id="closeEditTeamModal" type="button" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+  <div id="practicesModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      
+      <div class="flex items-start justify-between px-6 py-5 border-b flex-shrink-0">
+        <div>
+          <h3 class="text-2xl font-semibold leading-6">Team Practices</h3>
+          <p class="mt-1 text-sm text-gray-500">Scheduled practice sessions for {{ team.name }}.</p>
         </div>
-
-        <form method="post" action="{% url 'edit_team' team.id %}" class="overflow-y-auto flex-1">
-          <div class="px-6 py-6 space-y-6">
-            {% csrf_token %}
-            <label class="block">
-              <span class="text-sm font-medium">Team Name</span>
-              <input name="team_name" type="text" value="{{ team.name }}" placeholder="Enter team name"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-medium">Sport</span>
-              <select name="sport"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                <option value="">Select a sport</option>
-                <option value="Basketball" {% if team.sport == 'Basketball' %}selected{% endif %}>Basketball</option>
-                <option value="Football" {% if team.sport == 'Football' %}selected{% endif %}>Football</option>
-                <option value="Soccer" {% if team.sport == 'Soccer' %}selected{% endif %}>Soccer</option>
-                <option value="Baseball" {% if team.sport == 'Baseball' %}selected{% endif %}>Baseball</option>
-                <option value="Volleyball" {% if team.sport == 'Volleyball' %}selected{% endif %}>Volleyball</option>
-                <option value="Track & Field" {% if team.sport == 'Track & Field' %}selected{% endif %}>Track & Field</option>
-                <option value="Tennis" {% if team.sport == 'Tennis' %}selected{% endif %}>Tennis</option>
-                <option value="Swimming" {% if team.sport == 'Swimming' %}selected{% endif %}>Swimming</option>
-                <option value="Other" {% if team.sport == 'Other' %}selected{% endif %}>Other</option>
-              </select>
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-medium">Season</span>
-              <input name="season" type="text" value="{{ team.season }}" placeholder="e.g., Fall 2024, Spring 2025"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-medium">Location</span>
-              <input name="location" type="text" value="{{ team.location }}" placeholder="Enter location"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-medium">Max Players</span>
-              <input name="max_players_allowed" type="number" value="{{ team.max_players_allowed }}" placeholder="Enter max players"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </label>
-
-            <label class="block">
-              <span class="text-sm font-medium">Status</span>
-              <select name="status"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="Active" {% if team.status == 'Active' %}selected{% endif %}>Active</option>
-                <option value="Inactive" {% if team.status == 'Inactive' %}selected{% endif %}>Inactive</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50 flex-shrink-0">
-            <button type="button" id="cancelEditTeamModal"
-              class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">Cancel</button>
-            <button type="submit" class="px-5 h-11 rounded-xl bg-gray-900 text-white hover:bg-black">Save Changes</button>
-          </div>
-        </form>
+        <button id="closePracticesModal" type="button" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
       </div>
-    </div>
-  </div>
 
-  <!-- Add Player Modal -->
-  <div id="addPlayerModal" class="hidden fixed inset-0 bg-black/60 z-50">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div class="flex items-start justify-between px-6 py-5 border-b flex-shrink-0">
-          <div>
-            <h3 class="text-2xl font-semibold leading-6">Add Player</h3>
-            <p class="mt-1 text-sm text-gray-500">Add a new player to the team</p>
-          </div>
-          <button id="closeAddPlayerModal" type="button" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-        </div>
-
-        <form method="post" action="{% url 'add_player' team.id %}" class="overflow-y-auto flex-1">
-          <div class="px-6 py-6 space-y-6">
-            {% csrf_token %}
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-sm font-medium">First Name</span>
-                <input name="first_name" type="text" placeholder="Enter first name"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-              </label>
-
-              <label class="block">
-                <span class="text-sm font-medium">Last Name</span>
-                <input name="last_name" type="text" placeholder="Enter last name"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-              </label>
+      <div class="overflow-y-auto p-4 space-y-3">
+        {% if practices %}
+            {% for practice in practices %}
+            <div class="flex items-center gap-4 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                <div class="flex-shrink-0 w-16 h-16 bg-white border border-green-200 rounded-lg flex flex-col items-center justify-center text-green-600 shadow-sm">
+                    <span class="text-xs font-bold uppercase">{{ practice.date|date:"M" }}</span>
+                    <span class="text-xl font-bold leading-none">{{ practice.date|date:"d" }}</span>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-gray-900 font-semibold truncate">{{ practice.title }}</h4>
+                    <p class="text-sm text-gray-500">{{ practice.time|time:"g:i A" }} • {{ practice.location }}</p>
+                    {% if practice.notes %}
+                        <p class="text-xs text-gray-400 mt-1 truncate">{{ practice.notes }}</p>
+                    {% endif %}
+                </div>
             </div>
-
-            <label class="block">
-              <span class="text-sm font-medium">Email</span>
-              <input name="email" type="email" placeholder="player@example.com"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </label>
-
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-sm font-medium">Jersey Number</span>
-                <input name="jersey_number" type="number" placeholder="e.g., 23"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </label>
-
-              <label class="block">
-                <span class="text-sm font-medium">Position</span>
-                <select name="position" id="addPlayerPosition"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">Select position</option>
-                </select>
-              </label>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-8">
+                <div class="text-4xl mb-2">🧘</div>
+                <h3 class="text-gray-900 font-medium">No practices scheduled</h3>
+                <p class="text-gray-500 text-sm">Add a practice event from the dashboard schedule.</p>
             </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50 flex-shrink-0">
-            <button type="button" id="cancelAddPlayerModal"
-              class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">Cancel</button>
-            <button type="submit" class="px-5 h-11 rounded-xl bg-gray-900 text-white hover:bg-black">Add Player</button>
-          </div>
-        </form>
+        {% endif %}
+      </div>
+      
+      <div class="p-4 border-t bg-gray-50 rounded-b-2xl flex justify-end">
+        <button id="btnOkPractices" class="px-5 h-10 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium">
+            Close
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Edit Player Modal -->
-  <div id="editPlayerModal" class="hidden fixed inset-0 bg-black/60 z-50">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <div class="flex items-start justify-between px-6 py-5 border-b flex-shrink-0">
-          <div>
-            <h3 class="text-2xl font-semibold leading-6">Edit Player</h3>
-            <p class="mt-1 text-sm text-gray-500">Update player information</p>
-          </div>
-          <button id="closeEditPlayerModal" type="button" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-        </div>
+  <div id="editTeamModal" class="hidden fixed inset-0 bg-black/60 z-50"><div class="min-h-full flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"><div class="flex items-start justify-between px-6 py-5 border-b"><div><h3 class="text-2xl font-semibold leading-6">Edit Team</h3></div><button id="closeEditTeamModal" class="text-gray-500 text-2xl">&times;</button></div><form method="post" action="{% url 'edit_team' team.id %}" class="px-6 py-6 space-y-6">{% csrf_token %}<label class="block"><span class="text-sm font-medium">Team Name</span><input name="team_name" type="text" value="{{ team.name }}" class="mt-2 block w-full h-12 px-4 border rounded-xl" required></label><label class="block"><span class="text-sm font-medium">Sport</span><select name="sport" class="mt-2 block w-full h-12 px-4 border rounded-xl" required><option value="{{ team.sport }}" selected>{{ team.sport }}</option><option>Basketball</option><option>Football</option><option>Soccer</option><option>Baseball</option><option>Volleyball</option><option>Other</option></select></label><label class="block"><span class="text-sm font-medium">Season</span><input name="season" type="text" value="{{ team.season }}" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><label class="block"><span class="text-sm font-medium">Location</span><input name="location" type="text" value="{{ team.location }}" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><label class="block"><span class="text-sm font-medium">Max Players</span><input name="max_players_allowed" type="number" value="{{ team.max_players_allowed }}" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><label class="block"><span class="text-sm font-medium">Status</span><select name="status" class="mt-2 block w-full h-12 px-4 border rounded-xl"><option value="Active" {% if team.status == 'Active' %}selected{% endif %}>Active</option><option value="Inactive" {% if team.status == 'Inactive' %}selected{% endif %}>Inactive</option></select></label><div class="flex justify-end gap-3"><button type="button" id="cancelEditTeamModal" class="px-4 h-11 border rounded-xl">Cancel</button><button type="submit" class="px-5 h-11 bg-black text-white rounded-xl">Save Changes</button></div></form></div></div></div>
 
-        <form method="post" id="editPlayerForm" class="overflow-y-auto flex-1">
-          <div class="px-6 py-6 space-y-6">
-            {% csrf_token %}
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-sm font-medium">First Name</span>
-                <input id="editFirstName" name="first_name" type="text" placeholder="Enter first name"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-              </label>
+  <div id="removeTeamModal" class="hidden fixed inset-0 bg-black/60 z-50"><div class="min-h-full flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg"><div class="flex items-start justify-between px-6 py-5 border-b"><h3 class="text-2xl font-semibold leading-6 text-red-600">Remove Team</h3><button id="closeRemoveTeamModal" class="text-gray-500 text-2xl">&times;</button></div><div class="px-6 py-6"><p class="text-gray-600">Are you sure you want to remove <strong class="text-gray-900">{{ team.name }}</strong>? <br><span class="text-sm text-red-600 mt-1 block">Warning: This action cannot be undone.</span></p><div class="mt-6 flex justify-end gap-3"><button id="cancelRemoveTeamModal" class="px-4 h-11 border rounded-xl">Cancel</button><form method="post" action="{% url 'delete_team' team.id %}">{% csrf_token %}<button type="submit" class="px-5 h-11 bg-red-600 text-white rounded-xl">Yes, Remove Team</button></form></div></div></div></div></div>
 
-              <label class="block">
-                <span class="text-sm font-medium">Last Name</span>
-                <input id="editLastName" name="last_name" type="text" placeholder="Enter last name"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-              </label>
-            </div>
+  <div id="addPlayerModal" class="hidden fixed inset-0 bg-black/60 z-50"><div class="min-h-full flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"><div class="flex items-start justify-between px-6 py-5 border-b"><div><h3 class="text-2xl font-semibold leading-6">Add Player</h3></div><button id="closeAddPlayerModal" class="text-gray-500 text-2xl">&times;</button></div><form method="post" action="{% url 'add_player' team.id %}" class="px-6 py-6 space-y-6">{% csrf_token %}<div class="grid grid-cols-2 gap-4"><label><span class="text-sm font-medium">First Name</span><input name="first_name" type="text" class="mt-2 block w-full h-12 px-4 border rounded-xl" required></label><label><span class="text-sm font-medium">Last Name</span><input name="last_name" type="text" class="mt-2 block w-full h-12 px-4 border rounded-xl" required></label></div><label><span class="text-sm font-medium">Email</span><input name="email" type="email" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><div class="grid grid-cols-2 gap-4"><label><span class="text-sm font-medium">Jersey</span><input name="jersey_number" type="number" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><label><span class="text-sm font-medium">Position</span><select name="position" id="addPlayerPosition" class="mt-2 block w-full h-12 px-4 border rounded-xl"></select></label></div><div class="flex justify-end gap-3"><button type="button" id="cancelAddPlayerModal" class="px-4 h-11 border rounded-xl">Cancel</button><button type="submit" class="px-5 h-11 bg-black text-white rounded-xl">Add Player</button></div></form></div></div></div>
 
-            <label class="block">
-              <span class="text-sm font-medium">Email</span>
-              <input id="editEmail" name="email" type="email" placeholder="player@example.com"
-                class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            </label>
+  <div id="editPlayerModal" class="hidden fixed inset-0 bg-black/60 z-50"><div class="min-h-full flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl"><div class="flex items-start justify-between px-6 py-5 border-b"><div><h3 class="text-2xl font-semibold leading-6">Edit Player</h3></div><button id="closeEditPlayerModal" class="text-gray-500 text-2xl">&times;</button></div><form method="post" id="editPlayerForm" class="px-6 py-6 space-y-6">{% csrf_token %}<div class="grid grid-cols-2 gap-4"><label><span class="text-sm font-medium">First Name</span><input id="editFirstName" name="first_name" type="text" class="mt-2 block w-full h-12 px-4 border rounded-xl" required></label><label><span class="text-sm font-medium">Last Name</span><input id="editLastName" name="last_name" type="text" class="mt-2 block w-full h-12 px-4 border rounded-xl" required></label></div><label><span class="text-sm font-medium">Email</span><input id="editEmail" name="email" type="email" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><div class="grid grid-cols-2 gap-4"><label><span class="text-sm font-medium">Jersey</span><input id="editJerseyNumber" name="jersey_number" type="number" class="mt-2 block w-full h-12 px-4 border rounded-xl"></label><label><span class="text-sm font-medium">Position</span><select id="editPosition" name="position" class="mt-2 block w-full h-12 px-4 border rounded-xl"></select></label></div><div class="flex justify-end gap-3"><button type="button" id="cancelEditPlayerModal" class="px-4 h-11 border rounded-xl">Cancel</button><button type="submit" class="px-5 h-11 bg-black text-white rounded-xl">Save Changes</button></div></form></div></div></div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <label class="block">
-                <span class="text-sm font-medium">Jersey Number</span>
-                <input id="editJerseyNumber" name="jersey_number" type="number" placeholder="e.g., 23"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </label>
+  <div id="removePlayerModal" class="hidden fixed inset-0 bg-black/60 z-50"><div class="min-h-full flex items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg"><div class="flex items-start justify-between px-6 py-5 border-b"><h3 class="text-2xl font-semibold leading-6">Remove Player</h3><button id="closeRemovePlayerModal" class="text-gray-500 text-2xl">&times;</button></div><div class="px-6 py-6"><p class="text-sm text-gray-600">Are you sure you want to remove <strong id="removePlayerName"></strong>?</p><div class="mt-6 flex justify-end gap-3"><button id="cancelRemovePlayerModal" class="px-4 h-11 border rounded-xl">Cancel</button><form method="post" id="removePlayerForm">{% csrf_token %}<button type="submit" class="px-5 h-11 bg-red-600 text-white rounded-xl">Remove Player</button></form></div></div></div></div></div>
 
-              <label class="block">
-                <span class="text-sm font-medium">Position</span>
-                <select id="editPosition" name="position"
-                  class="mt-2 block w-full h-12 px-4 text-base rounded-xl border border-gray-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">Select position</option>
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50 flex-shrink-0">
-            <button type="button" id="cancelEditPlayerModal"
-              class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">Cancel</button>
-            <button type="submit" class="px-5 h-11 rounded-xl bg-gray-900 text-white hover:bg-black">Save Changes</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Remove Player Modal -->
-  <div id="removePlayerModal" class="hidden fixed inset-0 bg-black/60 z-50">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-        <div class="flex items-start justify-between px-6 py-5 border-b">
-          <h3 class="text-2xl font-semibold leading-6">Remove Player</h3>
-          <button id="closeRemovePlayerModal" type="button"
-                  class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-        </div>
-
-        <div class="px-6 py-6">
-          <p class="text-sm text-gray-600">
-            Are you sure you want to remove <strong id="removePlayerName"></strong> from the team? This action cannot be undone.
-          </p>
-
-          <div class="mt-6 flex items-center justify-end gap-3">
-            <button id="cancelRemovePlayerModal" type="button"
-                    class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
-              Cancel
-            </button>
-
-            <form method="post" id="removePlayerForm">
-              {% csrf_token %}
-              <button type="submit"
-                      class="px-5 h-11 rounded-xl bg-red-600 text-white hover:bg-red-700">
-                Remove Player
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Logout Confirmation Modal -->
-  <div id="logoutModal" class="hidden fixed inset-0 bg-black/60 z-50">
-    <div class="min-h-full flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-        <div class="flex items-start justify-between px-6 py-5 border-b">
-          <h3 class="text-2xl font-semibold leading-6">Sign Out</h3>
-          <button id="closeLogoutModal" type="button"
-                  class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
-        </div>
-
-        <div class="px-6 py-6">
-          <p class="text-sm text-gray-600">
-           Are you sure you want to log out? You will need to log in again to access your account.
-          </p>
-
-          <div class="mt-6 flex items-center justify-end gap-3">
-            <button id="cancelLogoutModal" type="button"
-                    class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
-              Cancel
-            </button>
-
-            <form method="post" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button type="submit"
-                      class="px-5 h-11 rounded-xl bg-gray-900 text-white hover:bg-black">
-                Confirm
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal JS -->
   <script>
-    // Position options by sport
     const positionsBySport = {
       'Basketball': ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'],
       'Football': ['Quarterback', 'Running Back', 'Wide Receiver', 'Tight End', 'Offensive Line', 'Defensive Line', 'Linebacker', 'Cornerback', 'Safety', 'Kicker', 'Punter'],
       'Soccer': ['Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger'],
       'Baseball': ['Pitcher', 'Catcher', 'First Base', 'Second Base', 'Third Base', 'Shortstop', 'Left Field', 'Center Field', 'Right Field', 'Designated Hitter'],
       'Volleyball': ['Setter', 'Outside Hitter', 'Middle Blocker', 'Opposite Hitter', 'Libero', 'Defensive Specialist'],
-      'Track & Field': ['Sprinter', 'Distance Runner', 'Hurdler', 'Jumper', 'Thrower', 'Multi-Event'],
-      'Tennis': ['Singles', 'Doubles'],
-      'Swimming': ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'Individual Medley', 'Relay'],
       'Other': []
     };
-
-    // Get team sport
     const teamSport = '{{ team.sport }}';
 
-    // Populate position dropdown
     function populatePositions(selectElement, currentValue = '') {
       selectElement.innerHTML = '<option value="">Select position</option>';
-      
       const positions = positionsBySport[teamSport] || [];
-      
       positions.forEach(position => {
         const option = document.createElement('option');
-        option.value = position;
-        option.textContent = position;
-        if (position === currentValue) {
-          option.selected = true;
-        }
+        option.value = position; option.textContent = position;
+        if (position === currentValue) option.selected = true;
         selectElement.appendChild(option);
       });
-
-      // Add "Other" option
-      const otherOption = document.createElement('option');
-      otherOption.value = 'Other';
-      otherOption.textContent = 'Other';
-      if (currentValue === 'Other' || (currentValue && !positions.includes(currentValue))) {
-        otherOption.selected = true;
-      }
+      const otherOption = document.createElement('option'); otherOption.value = 'Other'; otherOption.textContent = 'Other';
+      if (currentValue === 'Other' || (currentValue && !positions.includes(currentValue))) otherOption.selected = true;
       selectElement.appendChild(otherOption);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Populate add player position dropdown
-      const addPlayerPosition = document.getElementById('addPlayerPosition');
-      if (addPlayerPosition) {
-        populatePositions(addPlayerPosition);
+      // Populate Add Player Dropdown
+      const addPlayerPos = document.getElementById('addPlayerPosition');
+      if (addPlayerPos) populatePositions(addPlayerPos);
+
+      // --- PRACTICES MODAL LOGIC ---
+      const practicesModal = document.getElementById('practicesModal');
+      const openPracticesBtn = document.getElementById('openPracticesModal');
+      const closePracticesBtn = document.getElementById('closePracticesModal');
+      const okPracticesBtn = document.getElementById('btnOkPractices');
+
+      function togglePracticesModal(show) {
+        if(show) practicesModal.classList.remove('hidden');
+        else practicesModal.classList.add('hidden');
       }
 
-      // Edit Team Modal
-      const editTeamModal = document.getElementById('editTeamModal');
-      const openEditTeamBtn = document.getElementById('openEditTeamModal');
-      const closeEditTeamBtn = document.getElementById('closeEditTeamModal');
-      const cancelEditTeamBtn = document.getElementById('cancelEditTeamModal');
+      if(openPracticesBtn) openPracticesBtn.addEventListener('click', () => togglePracticesModal(true));
+      if(closePracticesBtn) closePracticesBtn.addEventListener('click', () => togglePracticesModal(false));
+      if(okPracticesBtn) okPracticesBtn.addEventListener('click', () => togglePracticesModal(false));
+      if(practicesModal) practicesModal.addEventListener('click', e => { if(e.target === practicesModal) togglePracticesModal(false); });
 
-      openEditTeamBtn && openEditTeamBtn.addEventListener('click', () => editTeamModal.classList.remove('hidden'));
-      closeEditTeamBtn && closeEditTeamBtn.addEventListener('click', () => editTeamModal.classList.add('hidden'));
-      cancelEditTeamBtn && cancelEditTeamBtn.addEventListener('click', () => editTeamModal.classList.add('hidden'));
-      editTeamModal && editTeamModal.addEventListener('click', e => { if (e.target === editTeamModal) editTeamModal.classList.add('hidden'); });
 
-      // Add Player Modal
-      const addPlayerModal = document.getElementById('addPlayerModal');
-      const openAddPlayerBtn = document.getElementById('openAddPlayerModal');
-      const openAddPlayerBtnEmpty = document.getElementById('openAddPlayerModalEmpty');
-      const closeAddPlayerBtn = document.getElementById('closeAddPlayerModal');
-      const cancelAddPlayerBtn = document.getElementById('cancelAddPlayerModal');
+      // --- OTHER MODALS (Refactored for brevity) ---
+      const setupModal = (modalId, openId, closeIds) => {
+          const modal = document.getElementById(modalId);
+          const openBtn = document.getElementById(openId);
+          if(openBtn) openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+          closeIds.forEach(id => {
+              const btn = document.getElementById(id);
+              if(btn) btn.addEventListener('click', () => modal.classList.add('hidden'));
+          });
+          if(modal) modal.addEventListener('click', e => { if(e.target === modal) modal.classList.add('hidden'); });
+      };
 
-      openAddPlayerBtn && openAddPlayerBtn.addEventListener('click', () => addPlayerModal.classList.remove('hidden'));
-      openAddPlayerBtnEmpty && openAddPlayerBtnEmpty.addEventListener('click', () => addPlayerModal.classList.remove('hidden'));
-      closeAddPlayerBtn && closeAddPlayerBtn.addEventListener('click', () => addPlayerModal.classList.add('hidden'));
-      cancelAddPlayerBtn && cancelAddPlayerBtn.addEventListener('click', () => addPlayerModal.classList.add('hidden'));
-      addPlayerModal && addPlayerModal.addEventListener('click', e => { if (e.target === addPlayerModal) addPlayerModal.classList.add('hidden'); });
-
-      // Edit Player Modal
-      const editPlayerModal = document.getElementById('editPlayerModal');
-      const closeEditPlayerBtn = document.getElementById('closeEditPlayerModal');
-      const cancelEditPlayerBtn = document.getElementById('cancelEditPlayerModal');
-
-      closeEditPlayerBtn && closeEditPlayerBtn.addEventListener('click', () => editPlayerModal.classList.add('hidden'));
-      cancelEditPlayerBtn && cancelEditPlayerBtn.addEventListener('click', () => editPlayerModal.classList.add('hidden'));
-      editPlayerModal && editPlayerModal.addEventListener('click', e => { if (e.target === editPlayerModal) editPlayerModal.classList.add('hidden'); });
-
-      // Remove Player Modal
-      const removePlayerModal = document.getElementById('removePlayerModal');
-      const closeRemovePlayerBtn = document.getElementById('closeRemovePlayerModal');
-      const cancelRemovePlayerBtn = document.getElementById('cancelRemovePlayerModal');
-
-      closeRemovePlayerBtn && closeRemovePlayerBtn.addEventListener('click', () => removePlayerModal.classList.add('hidden'));
-      cancelRemovePlayerBtn && cancelRemovePlayerBtn.addEventListener('click', () => removePlayerModal.classList.add('hidden'));
-      removePlayerModal && removePlayerModal.addEventListener('click', e => { if (e.target === removePlayerModal) removePlayerModal.classList.add('hidden'); });
-
-      // Logout Modal
-      const logoutModal = document.getElementById('logoutModal');
-      const openLogoutButton = document.getElementById('openLogoutModal');
-      const cancelLogoutButton = document.getElementById('cancelLogoutModal');
-      const closeLogoutButton = document.getElementById('closeLogoutModal');
-
-      openLogoutButton && openLogoutButton.addEventListener('click', () => logoutModal.classList.remove('hidden'));
-      cancelLogoutButton && cancelLogoutButton.addEventListener('click', () => logoutModal.classList.add('hidden'));
-      closeLogoutButton && closeLogoutButton.addEventListener('click', () => logoutModal.classList.add('hidden'));
-      logoutModal && logoutModal.addEventListener('click', e => { if (e.target === logoutModal) logoutModal.classList.add('hidden'); });
-
-      // ESC key to close modals
+      setupModal('editTeamModal', 'openEditTeamModal', ['closeEditTeamModal', 'cancelEditTeamModal']);
+      setupModal('removeTeamModal', 'openRemoveTeamModal', ['closeRemoveTeamModal', 'cancelRemoveTeamModal']);
+      setupModal('addPlayerModal', 'openAddPlayerModal', ['closeAddPlayerModal', 'cancelAddPlayerModal']);
+      setupModal('editPlayerModal', null, ['closeEditPlayerModal', 'cancelEditPlayerModal']);
+      setupModal('removePlayerModal', null, ['closeRemovePlayerModal', 'cancelRemovePlayerModal']);
+      
+      // Global Escape
       document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-          editTeamModal.classList.add('hidden');
-          addPlayerModal.classList.add('hidden');
-          editPlayerModal.classList.add('hidden');
-          removePlayerModal.classList.add('hidden');
-          logoutModal.classList.add('hidden');
-        }
+          if (e.key === 'Escape') {
+              document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
+          }
       });
     });
 
-    // Function to open edit player modal
-    function openEditPlayerModal(playerId, firstName, lastName, email, jerseyNumber, position) {
-      const modal = document.getElementById('editPlayerModal');
-      const form = document.getElementById('editPlayerForm');
-      const positionSelect = document.getElementById('editPosition');
-      
-      form.action = '/coach/team/{{ team.id }}/player/' + playerId + '/edit/';
-      
-      document.getElementById('editFirstName').value = firstName;
-      document.getElementById('editLastName').value = lastName;
-      document.getElementById('editEmail').value = email;
-      document.getElementById('editJerseyNumber').value = jerseyNumber;
-      
-      // Populate position dropdown with current value selected
-      populatePositions(positionSelect, position);
-      
-      modal.classList.remove('hidden');
+    // --- DYNAMIC OPEN FUNCTIONS ---
+    function openEditPlayerModal(id, first, last, email, jersey, pos) {
+        document.getElementById('editPlayerForm').action = '/coach/team/{{ team.id }}/player/' + id + '/edit/';
+        document.getElementById('editFirstName').value = first;
+        document.getElementById('editLastName').value = last;
+        document.getElementById('editEmail').value = email;
+        document.getElementById('editJerseyNumber').value = jersey;
+        populatePositions(document.getElementById('editPosition'), pos);
+        document.getElementById('editPlayerModal').classList.remove('hidden');
     }
 
-    // Function to open remove player modal
-    function openRemovePlayerModal(playerId, playerName) {
-      const modal = document.getElementById('removePlayerModal');
-      const form = document.getElementById('removePlayerForm');
-      
-      form.action = '/coach/team/{{ team.id }}/player/' + playerId + '/remove/';
-      
-      document.getElementById('removePlayerName').textContent = playerName;
-      
-      modal.classList.remove('hidden');
+    function openRemovePlayerModal(id, name) {
+        document.getElementById('removePlayerForm').action = '/coach/team/{{ team.id }}/player/' + id + '/remove/';
+        document.getElementById('removePlayerName').textContent = name;
+        document.getElementById('removePlayerModal').classList.remove('hidden');
     }
   </script>
 </body>
