@@ -1,18 +1,16 @@
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash # Added update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .models import Player, Team, CoachProfile 
-from .models import Event
+from django.contrib.auth.forms import PasswordChangeForm # Added PasswordChangeForm
 from django.utils import timezone
 from django.urls import reverse
-from .models import Player, Team, CoachProfile, Event
-
+from .models import Player, Team, CoachProfile, Event 
 
 # -------------------------------
 # Landing Page View
@@ -25,7 +23,6 @@ def landing_page(request):
 # Login View
 # -------------------------------
 def login_view(request):
-
     if request.method == "POST":
         identifier = (request.POST.get("username") or "").strip()
         password = request.POST.get("password") or ""
@@ -57,11 +54,20 @@ def login_view(request):
     return render(request, "auth/login.html")
 
 # -------------------------------
+# Logout View (New/Restored)
+# -------------------------------
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect("landing_page")
+
+
+# -------------------------------
 # Coach Dashboard
 # -------------------------------
 @login_required(login_url="login")
 def coach_dashboard(request):
-
     coach_profile = CoachProfile.objects.filter(user=request.user).first()
 
     # --- 1. Handle Create Team Form ---
@@ -96,14 +102,14 @@ def coach_dashboard(request):
     upcoming_events = all_events.filter(date__gte=today).order_by('date', 'time')
     past_events = all_events.filter(date__lt=today).order_by('-date', '-time')
 
-    # --- 4. Prepare Data for Calendar (JSON) ⭐ THIS PART WAS MISSING ⭐ ---
+    # --- 4. Prepare Data for Calendar (JSON) ---
     events_json = []
     for event in all_events:
         events_json.append({
             'id': event.id,
             'title': event.title,
-            'date': event.date.strftime('%Y-%m-%d'), # Format YYYY-MM-DD
-            'time': event.time.strftime('%H:%M'),    # Format HH:MM
+            'date': event.date.strftime('%Y-%m-%d'), 
+            'time': event.time.strftime('%H:%M'), 
             'type': event.event_type,
             'location': event.location,
             'opponent': event.opponent,
@@ -120,15 +126,101 @@ def coach_dashboard(request):
             "all_players": all_players,
             "upcoming_events": upcoming_events,
             "past_events": past_events,
-            "events_json": json.dumps(events_json, cls=DjangoJSONEncoder), # Pass JSON string to template
+            "events_json": json.dumps(events_json, cls=DjangoJSONEncoder),
         },
     )
+
+# -------------------------------
+# Teams View (New/Restored for URL tab)
+# -------------------------------
+@login_required(login_url="login")
+def teams_view(request):
+    # This view redirects to the dashboard to show the teams list.
+    return redirect('coach_dashboard') 
+
+# -------------------------------
+# Players View (New/Restored for URL tab)
+# -------------------------------
+@login_required(login_url="login")
+def players_view(request):
+    teams = Team.objects.filter(coach=request.user)
+    players = Player.objects.filter(team__in=teams)
+    
+    # In a full multi-tab dashboard, you'd render a dedicated players template here.
+    return render(request, "team_mgmt/players_list.html", {"players": players})
+
+# -------------------------------
+# Schedule View (New/Restored for URL tab)
+# -------------------------------
+@login_required(login_url="login")
+def schedule_view(request):
+    # This view redirects to the dashboard to show the schedule list.
+    return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
+
+# -------------------------------
+# Stats View (New/Restored for URL tab)
+# -------------------------------
+@login_required(login_url="login")
+def stats_view(request):
+    # Placeholder for a dedicated stats page or redirect to dashboard with tab
+    stats_data = "Statistics overview will be displayed here." 
+    return render(request, "team_mgmt/stats.html", {"stats_data": stats_data})
+
+# -------------------------------
+# Profile View (New/Restored - FIXES ATTRIBUTE ERROR)
+# -------------------------------
+@login_required(login_url='login')
+def profile_view(request):
+    # 🎯 FIX FOR SYNTAX ERROR (Cleaned whitespace on this line)
+    coach_profile, created = CoachProfile.objects.get_or_create(user=request.user) 
+
+    if request.method == "POST":
+        # Handle form submission, saving updated profile data
+        user = request.user
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        
+        # 🎯 FIXED LINE (coach_profile must have 'birthday' field in models.py)
+        coach_profile.birthday = request.POST.get('birthday', coach_profile.birthday)
+        coach_profile.gender = request.POST.get('gender', coach_profile.gender)
+        
+        if 'profile_picture' in request.FILES:
+            coach_profile.profile_picture = request.FILES['profile_picture']
+
+        # Save the updated information
+        user.save()
+        coach_profile.save()
+        
+        messages.success(request, "Your profile has been updated.")
+        return redirect('profile')
+
+    return render(request, 'auth/profile.html', {'coach_profile': coach_profile, 'user': request.user})
+
+# -------------------------------
+# Change Password View (New/Restored)
+# -------------------------------
+@login_required(login_url="login")
+def change_password(request): # ❌ Removed the duplicate @login_required decorator
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important for keeping user logged in
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('profile')  # Redirect to profile or dashboard
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, 'auth/change_password.html', {'form': form})
 
 # -------------------------------
 # Register View
 # -------------------------------
 def register_view(request):
-
+    # ... (Register logic is long, assume it's correctly placed here) ...
     if request.method == "POST":
 
         username = (request.POST.get("username") or "").strip()
@@ -177,8 +269,10 @@ def register_view(request):
 
         CoachProfile.objects.create(user=user, sport=sport)
 
-        login(request, user)
-        return redirect("coach_dashboard")
+        # 🎯 FIX: REMOVE AUTOMATIC LOGIN AND REDIRECT TO LOGIN PAGE
+        messages.success(request, "Account created successfully! Please sign in below.")
+        return redirect("login") # 👈 Redirect to the login page
+        # END FIX
 
     return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
@@ -188,12 +282,8 @@ def register_view(request):
 # -------------------------------
 @login_required(login_url="login")
 def team_detail(request, team_id):
-
     team = get_object_or_404(Team, id=team_id, coach=request.user)
     players = Player.objects.filter(team=team)
-
-    # --- NEW: Get Practice Events for this specific team ---
-    # We filter by the team AND event_type="Practice", sorting by newest date first
     practices = Event.objects.filter(team=team, event_type='Practice').order_by('-date', '-time')
 
     return render(
@@ -202,7 +292,7 @@ def team_detail(request, team_id):
         {
             "team": team,
             "players": players,
-            "practices": practices, # Pass this new list to the template
+            "practices": practices,
         },
     )
 
@@ -212,7 +302,6 @@ def team_detail(request, team_id):
 # -------------------------------
 @login_required(login_url="login")
 def edit_team(request, team_id):
-
     team = get_object_or_404(Team, id=team_id, coach=request.user)
 
     if request.method == "POST":
@@ -238,7 +327,6 @@ def edit_team(request, team_id):
 # -------------------------------
 @login_required(login_url="login")
 def add_player(request, team_id):
-
     team = get_object_or_404(Team, id=team_id, coach=request.user)
 
     if request.method == "POST":
@@ -253,7 +341,7 @@ def add_player(request, team_id):
         else:
             Player.objects.create(
                 coach=request.user,
-                team=team,   # ⭐ FIXED: assign to team
+                team=team,
                 name=f"{first_name} {last_name}",
                 first_name=first_name,
                 last_name=last_name,
@@ -273,9 +361,8 @@ def add_player(request, team_id):
 # -------------------------------
 @login_required(login_url="login")
 def edit_player(request, team_id, player_id):
-
     team = get_object_or_404(Team, id=team_id, coach=request.user)
-    player = get_object_or_404(Player, id=player_id, team=team)  # ✔ restrict to this team
+    player = get_object_or_404(Player, id=player_id, team=team)
 
     if request.method == "POST":
         first_name = (request.POST.get("first_name") or "").strip()
@@ -302,9 +389,8 @@ def edit_player(request, team_id, player_id):
 # -------------------------------
 @login_required(login_url="login")
 def remove_player(request, team_id, player_id):
-
     team = get_object_or_404(Team, id=team_id, coach=request.user)
-    player = get_object_or_404(Player, id=player_id, team=team)  # ✔ restrict deletion
+    player = get_object_or_404(Player, id=player_id, team=team)
 
     if request.method == "POST":
         player_name = player.name
@@ -313,18 +399,23 @@ def remove_player(request, team_id, player_id):
 
     return redirect("team_detail", team_id=team.id)
 
-#delete team
+
+# -------------------------------
+# Delete Team
+# -------------------------------
+@login_required(login_url="login")
 def delete_team(request, team_id):
-    team = get_object_or_404(Team, id=team_id)
-    
+    team = get_object_or_404(Team, id=team_id, coach=request.user)
+
     if request.method == "POST":
         team_name = team.name
         team.delete()
         messages.success(request, f"Team '{team_name}' has been successfully removed.")
-        return redirect('coach_dashboard') # Redirects back to main dashboard
+        return redirect('coach_dashboard') 
     
-    # If someone tries to access this via GET, just send them back to the detail page
+    # If someone tries to access this via GET, just send them back
     return redirect('team_detail', team_id=team_id)
+
 
 # -------------------------------
 # Add Event View
@@ -332,7 +423,6 @@ def delete_team(request, team_id):
 @login_required(login_url="login")
 def add_event(request):
     if request.method == "POST":
-        # ... (keep your existing variable getting logic) ...
         team_id = request.POST.get("team_id")
         title = request.POST.get("title")
         event_type = request.POST.get("event_type")
@@ -357,8 +447,6 @@ def add_event(request):
         )
         messages.success(request, "Event scheduled successfully!")
         
-        # ⭐ CHANGE THIS LINE ⭐
-        # Instead of just redirecting to the name, we build the URL and add ?tab=schedule
         return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
 
     return redirect("coach_dashboard")
@@ -379,7 +467,6 @@ def edit_event(request, event_id):
         event.opponent = request.POST.get("opponent")
         event.notes = request.POST.get("notes")
         
-        # Update team if changed
         team_id = request.POST.get("team_id")
         if team_id:
             event.team = get_object_or_404(Team, id=team_id, coach=request.user)
@@ -404,3 +491,13 @@ def delete_event(request, event_id):
         
     return redirect("coach_dashboard")
 
+
+# Schedule View
+def schedule_view(request):
+    # Your logic for fetching and rendering the schedule
+    return render(request, 'team_mgmt/schedule.html')
+
+# Stats View
+def stats_view(request):
+    # Your logic for fetching and rendering the statistics
+    return render(request, 'team_mgmt/stats.html')

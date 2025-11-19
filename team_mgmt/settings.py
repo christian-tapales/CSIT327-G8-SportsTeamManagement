@@ -34,14 +34,27 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 # ===========================
 # Render.com & local use the same logic:
 #  - If DATABASE_URL exists → use it
-#  - If not → Django will error (good for debugging)
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+#  - If not → use SQLite as fallback (for local development)
+DATABASE_URL = os.getenv('DATABASE_URL', None)
+
+if DATABASE_URL:
+    # If DATABASE_URL is provided (e.g., in production), use it for PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True  # SSL for cloud DB (e.g., PostgreSQL)
+        )
+    }
+else:
+    # Fallback to SQLite for local development if DATABASE_URL is not provided
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 
 # ===========================
 # APPLICATIONS

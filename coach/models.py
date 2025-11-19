@@ -5,6 +5,12 @@ from django.contrib.auth.models import User
 # COACH PROFILE MODEL
 # ----------------------------
 class CoachProfile(models.Model):
+    GENDER_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ]
+
     SPORT_CHOICES = [
         ("Basketball", "Basketball"),
         ("Football", "Football"),
@@ -19,17 +25,15 @@ class CoachProfile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     sport = models.CharField(max_length=30, choices=SPORT_CHOICES)
-
-    # FIX: prevent NULL errors in deployed Supabase database
-    gender = models.CharField(
-        max_length=20,
-        default="Not specified",
-        blank=True
-    )
+    
+    # Fields needed to resolve the previous AttributeErrors:
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
+    birthday = models.DateField(null=True, blank=True) 
 
     def __str__(self):
         return f"{self.user.username} - {self.sport}"
 
+# ... (Rest of models.py continues with Player, Team, and Event models)
 
 # ----------------------------
 # PLAYER MODEL
@@ -43,14 +47,11 @@ class Player(models.Model):
     jersey_number = models.CharField(max_length=10, blank=True, null=True)
     position = models.CharField(max_length=50, blank=True, null=True)
 
-    # Additional optional fields
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
 
-
-    # REQUIRED (prevents IntegrityError on insert)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -101,7 +102,7 @@ class Team(models.Model):
 
 
 # ----------------------------
-# EVENT MODEL (Moved outside of Team)
+# EVENT MODEL
 # ----------------------------
 class Event(models.Model):
     EVENT_TYPES = [
@@ -110,7 +111,6 @@ class Event(models.Model):
     ]
 
     coach = models.ForeignKey(User, on_delete=models.CASCADE)
-    # We can use Team without quotes here because Team is defined above this class
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
