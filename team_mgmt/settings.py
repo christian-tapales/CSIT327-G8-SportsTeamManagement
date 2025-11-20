@@ -3,10 +3,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
 
-# Load .env variables
+# ===========================
+# LOAD ENV VARIABLES
+# ===========================
 load_dotenv()
 
-# Base directory
+# ===========================
+# BASE DIRECTORY
+# ===========================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ===========================
@@ -30,34 +34,22 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 ).split(",")
 
 # ===========================
-# DATABASE CONFIG
+# DATABASE CONFIGURATION
 # ===========================
-# Render.com & local use the same logic:
-#  - If DATABASE_URL exists → use it
-#  - If not → use SQLite as fallback (for local development)
-DATABASE_URL = os.getenv('DATABASE_URL', None)
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL not set in .env")
 
-if DATABASE_URL:
-    # If DATABASE_URL is provided (e.g., in production), use it for PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=True  # SSL for cloud DB (e.g., PostgreSQL)
-        )
-    }
-else:
-    # Fallback to SQLite for local development if DATABASE_URL is not provided
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
+DATABASES = {
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
 
 # ===========================
-# APPLICATIONS
+# INSTALLED APPS
 # ===========================
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -75,7 +67,7 @@ INSTALLED_APPS = [
 # ===========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Required for Render static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -84,6 +76,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# ===========================
+# URL & WSGI
+# ===========================
 ROOT_URLCONF = "team_mgmt.urls"
 WSGI_APPLICATION = "team_mgmt.wsgi.application"
 
@@ -93,7 +88,8 @@ WSGI_APPLICATION = "team_mgmt.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "coach" / "templates"],
+        # Look inside top-level templates/ folder
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -128,11 +124,8 @@ USE_TZ = True
 # STATIC FILES
 # ===========================
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [
-    BASE_DIR / "coach" / "static",
-]
+STATICFILES_DIRS = [BASE_DIR / "coach" / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ===========================

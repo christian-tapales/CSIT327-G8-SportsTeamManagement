@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Change Password{% endblock %}
+
+{# This block overrides the default header and navigation from base.html and leaves it empty #}
+{% block header_nav %}
+{% endblock header_nav %}
+
+{% block content %}
+
+{# START: CUSTOM PROFILE NAVIGATION #}
+<div class="max-w-screen-2xl mx-auto px-6 pt-4 w-full"> 
+    <nav class="bg-white border-b border-gray-200 shadow-sm"> 
+        <div class="flex space-x-8 px-6 -mb-px items-center">
+            
+            <a href="{% url 'coach_dashboard' %}" 
+               class="flex items-center py-3 text-gray-600 hover:text-gray-900 transition-colors">
+                <span class="mr-2">←</span> Dashboard
+            </a>
+
+            <a href="{% url 'profile' %}" 
+               class="profile-nav-tab flex items-center py-3 text-gray-600 hover:text-gray-900 transition-colors">
+                <i class="fas fa-user mr-2 w-4 text-purple-700"></i> Profile Details
+            </a>
+            
+            {# Change Password Tab - ACTIVE #}
+            <a href="{% url 'change_password' %}" 
+               class="profile-nav-tab active-tab flex items-center py-3 text-gray-900 border-b-2 border-gray-900 transition-colors">
+                <i class="fas fa-lock mr-2 w-4 text-orange-500"></i> Change Password
+            </a>
+        </div>
+    </nav>
+</div>
+{# END: CUSTOM PROFILE NAVIGATION #}
+
+{# Corrected the margin/padding for the main content card #}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-xl mt-8"> 
+{# Changed mt-6 to mt-8 for spacing below the navigation bar, and adjusted p-6 to p-8 for better internal padding #}
+
+    <h2 class="text-2xl font-bold mb-6 text-gray-900">Change Password</h2>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-3 text-sm rounded-lg 
+            {% if message.tags == 'error' %}bg-red-100 text-red-700
+            {% elif message.tags == 'success' %}bg-green-100 text-green-700
+            {% else %}bg-gray-100 text-gray-700{% endif %}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-5">
+        {% csrf_token %}
+
+        <div>
+            <label class="font-medium text-gray-700">Old Password</label>
+            <input type="password" name="old_password" required
+                class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Enter your old password">
+        </div>
+
+        <div>
+            <label class="font-medium text-gray-700">New Password</label>
+            <input type="password" name="new_password1" required
+                class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Enter a new password">
+            <small class="text-gray-500 text-xs mt-1 block">Your password must contain at least 8 characters and not be entirely numeric.</small>
+        </div>
+
+        <div>
+            <label class="font-medium text-gray-700">Confirm New Password</label>
+            <input type="password" name="new_password2" required
+                class="w-full mt-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Re-enter your new password">
+        </div>
+
+        <button type="submit"
+            class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition duration-300 mt-6">
+            Update Password
+        </button>
+
+        <a href="{% url 'profile' %}" class="block text-center mt-3 text-gray-600 hover:text-black font-medium">
+            Back to Profile
+        </a>
+    </form>
+</div>
+{% endblock %}
