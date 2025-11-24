@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile Settings{% endblock %}
+
+{# This block is EMPTY, removing the default Teams/Players navigation from base.html #}
+{% block header_nav %}{% endblock header_nav %}
+
+
+{% block content %}
+
+{# 1. CUSTOM PROFILE NAVIGATION (Placed to run immediately after the header_nav is skipped) #}
+<div class="max-w-screen-2xl mx-auto px-6 w-full -mt-8"> 
+    {# -mt-8 pulls the content up to counteract base.html's default py-8 padding, placing it closer to the header #}
+    <nav class="bg-white border-b border-gray-200 shadow-sm"> 
+        <div class="flex space-x-8 px-6 -mb-px items-center">
+            
+            <a href="{% url 'coach_dashboard' %}" 
+               class="flex items-center py-3 text-gray-600 hover:text-gray-900 transition-colors">
+                <span class="mr-2">←</span> Dashboard
+            </a>
+
+            <a href="{% url 'profile' %}" 
+               class="profile-nav-tab active-tab flex items-center py-3 text-gray-900 border-b-2 border-gray-900 transition-colors">
+                <i class="fas fa-user mr-2 w-4 text-purple-700"></i> Profile Details
+            </a>
+            
+            <a href="{% url 'change_password' %}" 
+               class="profile-nav-tab flex items-center py-3 text-gray-600 hover:text-gray-900 transition-colors">
+                <i class="fas fa-lock mr-2 w-4 text-orange-500"></i> Change Password
+            </a>
+        </div>
+    </nav>
+</div>
+
+{# 2. PROFILE DETAILS CARD (This part is inside the main-wrapper set by base.html) #}
+<div class="max-w-5xl mx-auto mt-8 bg-white rounded-2xl shadow-md border p-10">
+    {% if messages %}
+        <div class="mt-4">
+            {% for message in messages %}
+            <div class="p-3 text-sm rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} mb-3" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form id="profileForm" method="POST" enctype="multipart/form-data" class="space-y-10">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div class="flex flex-col items-center">
+                {% if coach_profile.profile_picture %}
+                    <img id="profileImage" src="{{ coach_profile.profile_picture.url }}" class="w-40 h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm">
+                {% else %}
+                    <img id="profileImage" src="/static/img/default-avatar.png" class="w-40 h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm">
+                {% endif %}
+                <label for="profilePicInput" id="changePictureLabel" class="mt-4 px-4 py-2 border text-sm rounded-xl cursor-pointer bg-white hover:bg-gray-50">
+                    Change Picture
+                </label>
+                <input id="profilePicInput" name="profile_picture" type="file" class="hidden" accept="image/*">
+            </div>
+
+            <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-sm text-gray-700 font-medium">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" disabled class="mt-2 w-full rounded-xl border-gray-300 smooth-input disabled:bg-gray-50 disabled:text-gray-500">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-700 font-medium">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" disabled class="mt-2 w-full rounded-xl border-gray-300 smooth-input disabled:bg-gray-50 disabled:text-gray-500">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-700 font-medium">Email</label>
+                    <input type="email" name="email" value="{{ user.email }}" disabled class="mt-2 w-full rounded-xl border-gray-300 smooth-input disabled:bg-gray-50 disabled:text-gray-500">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-700 font-medium">Birthday</label>
+                    <input type="date" name="birthday" value="{{ coach_profile.birthday|date:'Y-m-d' }}" disabled class="mt-2 w-full rounded-xl border-gray-300 smooth-input disabled:bg-gray-50 disabled:text-gray-500">
+                </div>
+                <div>
+                    <label class="text-sm text-gray-700 font-medium">Gender</label>
+                    <select name="gender" disabled class="mt-2 w-full rounded-xl border-gray-300 smooth-input disabled:bg-gray-50 disabled:text-gray-500">
+                        <option value="Male" {% if coach_profile.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if coach_profile.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if coach_profile.gender == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-4 mt-6">
+            <button id="editBtn" type="button" class="px-6 h-11 rounded-xl bg-gray-900 text-white hover:bg-black transition duration-300">
+                Edit
+            </button>
+            <button id="saveBtn" type="submit" class="px-6 h-11 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition duration-300 hidden">
+                Save
+            </button>
+            <button id="cancelBtn" type="button" class="px-6 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 transition duration-300 hidden">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // ... (rest of the JS logic remains the same)
+    const form = document.getElementById('profileForm');
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], select');
+    const profilePicInput = document.getElementById('profilePicInput');
+    const changePictureLabel = document.getElementById('changePictureLabel');
+    const originalValues = {};
+
+    // 1. Initial setup and store original values
+    inputs.forEach(input => {
+        originalValues[input.name] = input.value;
+    });
+
+    // 2. Enable Edit Mode
+    editBtn.addEventListener('click', () => {
+        inputs.forEach(input => {
+            // Keep username and email read-only for security/consistency
+            if (input.name !== 'username' && input.name !== 'email') {
+                input.disabled = false;
+            }
+        });
+        editBtn.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+        cancelBtn.classList.remove('hidden');
+        
+        // Enable profile picture change
+        changePictureLabel.classList.remove('opacity-50', 'pointer-events-none');
+    });
+
+    // 3. Cancel Edit Mode
+    cancelBtn.addEventListener('click', () => {
+        inputs.forEach(input => {
+            input.disabled = true;
+            // Reset to original values
+            input.value = originalValues[input.name];
+        });
+        
+        // Hide save/cancel, show edit
+        editBtn.classList.remove('hidden');
+        saveBtn.classList.add('hidden');
+        cancelBtn.classList.add('hidden');
+
+        // Disable profile picture change
+        changePictureLabel.classList.add('opacity-50', 'pointer-events-none');
+        profilePicInput.value = ''; // Clear file input
+    });
+
+    // 4. Preview Profile Picture on selection
+    profilePicInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('profileImage').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+
+{% endblock %}

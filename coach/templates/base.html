@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sports Team Management{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+     <style>
+         /* Button and active tab styles */
+         .btn-create { 
+            background-color: #1e293b; /* Dark slate/navy color */
+        }
+        .btn-create:hover { 
+            background-color: #334155; 
+        }
+        .active-tab { 
+            border-bottom-width: 2px; 
+            border-color: #000; 
+            color: #000; 
+            font-weight: 500; 
+        }
+        html, body { 
+            height: 100%; 
+            overflow: hidden; /* Prevent body overflow */
+        }
+        .main-wrapper { 
+            flex-grow: 1; 
+            position: relative; 
+            z-index: 10; /* Ensure this layer is above other content */
+        }
+        .header-clickable-fix { 
+            position: relative; 
+            z-index: 1000; /* Make sure header is above all content */
+        }
+        .dropdown-text-button { 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            padding: 0; 
+            text-align: left; 
+            text-decoration: none; 
+            color: inherit; 
+        }
+        .dropdown-text-button:focus { 
+            outline: none; 
+        }
+        /* Profile tab styling */
+        .profile-nav-tab.active-tab { 
+            border-bottom-width: 2px; 
+            border-color: #4c1d95; 
+            color: #4c1d95; 
+            font-weight: 600; 
+        }
+        
+        /* Fix for overflowing content in Schedule, ensuring no overlap with navbar */
+        .schedule-event-wrapper {
+            position: relative;
+            z-index: 5; /* Ensure it's below the navigation */
+            overflow: visible;
+        }
+
+        /* Make sure navigation links stay clickable */
+        nav {
+            position: relative;
+            z-index: 9999; /* Ensure navigation stays above other content */
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    {# START: WRAP DEFAULT HEADER AND NAV IN A BLOCK #}
+    {% block header_nav %}
+    <header class="bg-white border-b header-clickable-fix">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3 relative z-30">
+            <span class="text-2xl">🏆</span>
+            <div class="relative">
+                <h1 class="text-xl font-semibold">Sports Team Management</h1>
+                <div class="text-sm text-gray-500 flex items-center">
+                    Welcome back, {{ request.user.first_name|default:request.user.username|default:"coach" }}!
+                </div>
+            </div>
+        </div>
+
+        {# 🎯 START: TARGETED SETTINGS BUTTON REPLACEMENT (EMOJI) #}
+        <div class="relative">
+            <button id="settingsButton" aria-label="Settings"
+                    class="bg-gray-900 text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-black transition duration-150">
+                <span class="text-xl">⚙️</span>
+            </button>
+            
+            <div id="settingsMenu" class="hidden absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border">
+                <ul class="py-1">
+                    <li><a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a></li>
+                    {# 🎯 BUTTON MODIFIED TO OPEN MODAL #}
+                    <li>
+                        <button id="openLogoutModalButton"
+                                class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                            Sign Out
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {# END: TARGETED SETTINGS BUTTON REPLACEMENT #}
+        
+        </div>
+
+        <nav class="max-w-screen-2xl mx-auto px-6">
+            <div class="flex items-center space-x-12 relative z-50">
+                <a href="{% url 'teams' %}" class="flex items-center py-3 {% if request.resolver_match.url_name == 'teams' %}active-tab{% else %}text-gray-600 hover:text-black hover:border-b-2 hover:border-gray-300 border-b-2 border-transparent{% endif %}">
+                    <span class="mr-2">🏆</span> Teams
+                </a>
+                <a href="{% url 'players' %}" class="flex items-center py-3 {% if request.resolver_match.url_name == 'players' %}active-tab{% else %}text-gray-600 hover:text-black hover:border-b-2 hover:border-gray-300 border-b-2 border-transparent{% endif %}">
+                    <span class="mr-2">🟣</span> Players
+                </a>
+                <a href="{% url 'schedule' %}" class="flex items-center py-3 {% if request.resolver_match.url_name == 'schedule' %}active-tab{% else %}text-gray-600 hover:text-black hover:border-b-2 hover:border-gray-300 border-b-2 border-transparent{% endif %}">
+                    <span class="mr-2">🗓️</span> Schedule
+                </a>
+                <a href="{% url 'stats' %}" class="flex items-center py-3 {% if request.resolver_match.url_name == 'stats' %}active-tab{% else %}text-gray-600 hover:text-black hover:border-b-2 hover:border-gray-300 border-b-2 border-transparent{% endif %}">
+                    <span class="mr-2">📊</span> Statistics
+                </a>
+            </div>
+        </nav>
+    </header>
+    {% endblock header_nav %}
+
+    <div class="main-wrapper max-w-screen-2xl mx-auto px-6 py-8 w-full">
+        {% block content %}{% endblock %}
+    </div>
+
+    {# START: LOGOUT CONFIRMATION MODAL HTML (Needed for JS to find elements) #}
+    <div id="logoutModal" class="hidden fixed inset-0 bg-black/60 z-50">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+                <div class="flex items-start justify-between px-6 py-5 border-b">
+                    <h3 class="text-2xl font-semibold leading-6">Sign Out</h3>
+                    <button id="closeLogoutModal" type="button"
+                            class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                </div>
+
+                <div class="px-6 py-6">
+                    <p class="text-sm text-gray-600">
+                        Are you sure you want to log out? You will need to log in again to access your account.
+                    </p>
+
+                    <div class="mt-6 flex items-center justify-end gap-3">
+                        <button id="cancelLogoutModal" type="button"
+                                class="px-4 h-11 rounded-xl border border-gray-300 bg-white hover:bg-gray-50">
+                            Cancel
+                        </button>
+
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="px-5 h-11 rounded-xl bg-gray-900 text-white hover:bg-black">
+                                Confirm
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {# END: LOGOUT CONFIRMATION MODAL HTML #}
+
+    <footer class="bg-gray-100 text-center py-4 text-gray-500 text-sm">
+        © 2025 Sports Team Management
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsButton = document.getElementById('settingsButton');
+            const settingsMenu = document.getElementById('settingsMenu'); 
+            const logoutModal = document.getElementById('logoutModal');
+            const openLogoutButton = document.getElementById('openLogoutModalButton');
+            const closeLogoutButton = document.getElementById('closeLogoutModal');
+            const cancelLogoutButton = document.getElementById('cancelLogoutModal');
+
+            if (settingsButton && settingsMenu) {
+                settingsMenu.classList.add('hidden');
+
+                settingsButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    settingsMenu.classList.toggle('hidden');
+                });
+                
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('#settingsButton') && !event.target.closest('#settingsMenu')) {
+                        settingsMenu.classList.add('hidden');
+                    }
+                });
+            } 
+
+            if (openLogoutButton && logoutModal) {
+                openLogoutButton.addEventListener('click', function() {
+                    if (settingsMenu) settingsMenu.classList.add('hidden');
+                    logoutModal.classList.remove('hidden');
+                });
+                
+                if (closeLogoutButton) closeLogoutButton.addEventListener('click', function() { logoutModal.classList.add('hidden'); });
+                if (cancelLogoutButton) cancelLogoutButton.addEventListener('click', function() { logoutModal.classList.add('hidden'); });
+            }
+            
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && logoutModal && !logoutModal.classList.contains('hidden')) {
+                    logoutModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
