@@ -123,3 +123,64 @@ class Event(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.date}"
+
+
+# ----------------------------
+# ATTENDANCE MODEL
+# ----------------------------
+class Attendance(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='attendances')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='attendances')
+    present = models.BooleanField(default=False)
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    recorded_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (('event', 'player'),)
+
+    def __str__(self):
+        return f"{self.player.name} - {self.event.title}: {'Present' if self.present else 'Absent'}"
+
+
+# ----------------------------
+# GAME + PLAYER STAT MODELS
+# ----------------------------
+class Game(models.Model):
+    coach = models.ForeignKey(User, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    # Optional link to an Event so games saved from an Event modal can be associated
+    event = models.ForeignKey(Event, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
+    title = models.CharField(max_length=255, blank=True, null=True)
+    opponent = models.CharField(max_length=255, blank=True, null=True)
+    date = models.DateField()
+    is_win = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.team.name} vs {self.opponent or 'Opponent'} - {self.date}"
+
+
+class PlayerStat(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='player_stats')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='stats')
+
+    two_pt_made = models.IntegerField(default=0)
+    two_pt_att = models.IntegerField(default=0)
+    three_pt_made = models.IntegerField(default=0)
+    three_pt_att = models.IntegerField(default=0)
+    ft_made = models.IntegerField(default=0)
+    ft_att = models.IntegerField(default=0)
+    rebound_off = models.IntegerField(default=0)
+    rebound_def = models.IntegerField(default=0)
+    assists = models.IntegerField(default=0)
+    steals = models.IntegerField(default=0)
+    blocks = models.IntegerField(default=0)
+    turnovers = models.IntegerField(default=0)
+    fouls = models.IntegerField(default=0)
+    total_points = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = (('game', 'player'),)
+
+    def __str__(self):
+        return f"{self.player.name} - {self.game}: {self.total_points} pts"

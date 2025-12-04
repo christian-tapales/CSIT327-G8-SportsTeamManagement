@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Player Stats • Sports Team Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-screen-2xl mx-auto px-6 py-8">
+    <h2 class="text-2xl font-semibold mb-4">Player Statistics History</h2>
+
+    <div id="playerInfo" class="bg-white p-6 rounded shadow mb-4">
+      Loading player stats...
+    </div>
+
+    <div id="historyTable" class="bg-white p-4 rounded shadow">
+    </div>
+  </div>
+<script>
+  const playerId = {{ player_id|default:'null' }};
+  if (playerId) {
+    fetch(`/coach/player/${playerId}/stats/`).then(r=>r.json()).then(d => {
+      const info = document.getElementById('playerInfo');
+      info.innerHTML = `<div class="text-lg font-medium">${d.player.name}</div>`;
+      const table = document.getElementById('historyTable');
+      if (!d.history.length) {
+        table.innerHTML = '<div class="p-4 text-gray-600">No history yet</div>';
+        return;
+      }
+      let html = '<table class="w-full"><thead class="bg-gray-100"><tr><th class="p-2">Date</th><th class="p-2">Opponent</th><th class="p-2">Points</th><th class="p-2">Reb</th><th class="p-2">Ast</th></tr></thead><tbody>';
+      d.history.forEach(h => {
+        const reb = (h.rebound_off||0) + (h.rebound_def||0);
+        html += `<tr class="border-b"><td class="p-2">${h.date}</td><td class="p-2">${h.opponent||''}</td><td class="p-2">${h.total_points}</td><td class="p-2">${reb}</td><td class="p-2">${h.assists}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      table.innerHTML = html;
+    }).catch(err => { document.getElementById('playerInfo').innerText = 'Error loading player history'; console.error(err); });
+  } else {
+    document.getElementById('playerInfo').innerText = 'No player selected';
+  }
+</script>
+</body>
+</html>

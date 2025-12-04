@@ -1,16 +1,18 @@
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash # Added update_session_auth_hash
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import PasswordChangeForm # Added PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.utils import timezone
 from django.urls import reverse
-from .models import Player, Team, CoachProfile, Event 
+from .models import Player, Team, CoachProfile, Event, Attendance
+from .models import PlayerStat, Game
 
 # -------------------------------
 # Landing Page View
@@ -29,13 +31,12 @@ def login_view(request):
 
         actual_username = None
 
-        # If identifier is email
+        # Logic to look up user by email or username
         if "@" in identifier:
             u = User.objects.filter(email__iexact=identifier).first()
             if u:
                 actual_username = u.username
 
-        # Try username or fallback to email lookup
         if not actual_username:
             if User.objects.filter(username__iexact=identifier).exists():
                 actual_username = identifier
@@ -54,7 +55,7 @@ def login_view(request):
     return render(request, "auth/login.html")
 
 # -------------------------------
-# Logout View (New/Restored)
+# Logout View
 # -------------------------------
 @login_required
 def logout_view(request):
@@ -95,6 +96,25 @@ def coach_dashboard(request):
     teams = Team.objects.filter(coach=request.user)
     all_players = Player.objects.filter(team__in=teams).select_related('team').order_by('team__name', 'last_name')
 
+    # --- 3a. Build latest attendance per player (most recently recorded attendance)
+    player_attendance_map = {}
+    if all_players.exists():
+        # Get Attendance entries for these players ordered by player then newest recorded_at
+        att_qs = Attendance.objects.filter(player__in=all_players).select_related('player', 'event').order_by('player_id', '-recorded_at')
+        for att in att_qs:
+            pid = att.player_id
+            if pid not in player_attendance_map:
+                player_attendance_map[pid] = {
+                    'present': att.present,
+                    'event_id': att.event_id,
+                    'event_title': att.event.title,
+                    'event_date': att.event.date.strftime('%Y-%m-%d') if att.event.date else None,
+                    'recorded_at': att.recorded_at,
+                }
+        # Attach latest attendance as attribute on player objects for easy template access
+        for p in all_players:
+            p.latest_attendance = player_attendance_map.get(p.id)
+
     # --- 3. Fetch & Sort Events ---
     today = timezone.now().date()
     all_events = Event.objects.filter(coach=request.user).select_related('team')
@@ -117,6 +137,14 @@ def coach_dashboard(request):
             'team_id': event.team.id
         })
 
+    # prepare players grouped by team for dashboard (same shape as stats view expects)
+    players_by_team = {}
+    for t in teams:
+        ps = Player.objects.filter(team=t).order_by('last_name', 'first_name')
+        players_by_team[t.id] = [
+            { 'id': p.id, 'name': p.name, 'jersey': p.jersey_number or '' } for p in ps
+        ]
+
     return render(
         request,
         "team_mgmt/coach_dashboard.html",
@@ -127,11 +155,13 @@ def coach_dashboard(request):
             "upcoming_events": upcoming_events,
             "past_events": past_events,
             "events_json": json.dumps(events_json, cls=DjangoJSONEncoder),
+            "player_attendance_map": player_attendance_map,
+            "players_by_team": json.dumps(players_by_team),
         },
     )
 
 # -------------------------------
-# Teams View (New/Restored for URL tab)
+# Teams View (For URL tab)
 # -------------------------------
 @login_required(login_url="login")
 def teams_view(request):
@@ -139,18 +169,17 @@ def teams_view(request):
     return redirect('coach_dashboard') 
 
 # -------------------------------
-# Players View (New/Restored for URL tab)
+# Players View (For URL tab)
 # -------------------------------
 @login_required(login_url="login")
 def players_view(request):
     teams = Team.objects.filter(coach=request.user)
     players = Player.objects.filter(team__in=teams)
     
-    # In a full multi-tab dashboard, you'd render a dedicated players template here.
     return render(request, "team_mgmt/players_list.html", {"players": players})
 
 # -------------------------------
-# Schedule View (New/Restored for URL tab)
+# Schedule View (For URL tab)
 # -------------------------------
 @login_required(login_url="login")
 def schedule_view(request):
@@ -158,20 +187,195 @@ def schedule_view(request):
     return redirect(f"{reverse('coach_dashboard')}?tab=schedule")
 
 # -------------------------------
-# Stats View (New/Restored for URL tab)
+# Stats View (For URL tab)
 # -------------------------------
 @login_required(login_url="login")
 def stats_view(request):
-    # Placeholder for a dedicated stats page or redirect to dashboard with tab
-    stats_data = "Statistics overview will be displayed here." 
-    return render(request, "team_mgmt/stats.html", {"stats_data": stats_data})
+    # Render the statistics page where coaches can enter per-game stats
+    teams = Team.objects.filter(coach=request.user)
+
+    # Prepare players grouped by team for client-side rendering
+    players_by_team = {}
+    for t in teams:
+        ps = Player.objects.filter(team=t).order_by('last_name', 'first_name')
+        players_by_team[t.id] = [
+            { 'id': p.id, 'name': p.name, 'jersey': p.jersey_number or '' } for p in ps
+        ]
+
+    return render(request, "team_mgmt/statistics.html", {"teams": teams, "players_by_team": json.dumps(players_by_team)})
+
+
+@login_required(login_url='login')
+def save_game_stats(request):
+    # Expects JSON payload with game info and player stats
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    game_info = payload.get('game') or {}
+    stats = payload.get('stats') or {}
+
+    team_id = game_info.get('team_id')
+    date = game_info.get('date')
+    title = game_info.get('title')
+    opponent = game_info.get('opponent')
+    is_win = bool(game_info.get('is_win'))
+
+    if not team_id or not date:
+        return JsonResponse({'error': 'team_id and date required'}, status=400)
+
+    team = get_object_or_404(Team, id=team_id, coach=request.user)
+
+    # Optionally link this Game to an existing Event (if saving from an Event modal)
+    event_id = game_info.get('event_id')
+    event_obj = None
+    if event_id:
+        try:
+            event_obj = Event.objects.get(id=int(event_id), coach=request.user)
+        except Exception:
+            event_obj = None
+
+    # If no explicit event_id provided, try to associate by team+date for Game events
+    if not event_obj:
+        try:
+            match_event = Event.objects.filter(team=team, date=date, event_type='Game').first()
+            if match_event:
+                event_obj = match_event
+        except Exception:
+            event_obj = None
+
+    game = Game.objects.create(
+        coach=request.user,
+        team=team,
+        event=event_obj,
+        title=title,
+        opponent=opponent,
+        date=date,
+        is_win=is_win,
+    )
+
+    saved = 0
+    for pid_str, row in stats.items():
+        try:
+            pid = int(pid_str)
+        except Exception:
+            continue
+        try:
+            player = Player.objects.get(id=pid, team=team)
+        except Player.DoesNotExist:
+            continue
+
+        ps_obj = PlayerStat.objects.create(
+            game=game,
+            player=player,
+            two_pt_made=int(row.get('two_pt_made') or 0),
+            two_pt_att=int(row.get('two_pt_att') or 0),
+            three_pt_made=int(row.get('three_pt_made') or 0),
+            three_pt_att=int(row.get('three_pt_att') or 0),
+            ft_made=int(row.get('ft_made') or 0),
+            ft_att=int(row.get('ft_att') or 0),
+            rebound_off=int(row.get('rebound_off') or 0),
+            rebound_def=int(row.get('rebound_def') or 0),
+            assists=int(row.get('assists') or 0),
+            steals=int(row.get('steals') or 0),
+            blocks=int(row.get('blocks') or 0),
+            turnovers=int(row.get('turnovers') or 0),
+            fouls=int(row.get('fouls') or 0),
+            total_points=int(row.get('total_points') or 0),
+        )
+        saved += 1
+
+    return JsonResponse({'success': True, 'saved': saved, 'game_id': game.id})
+
+
+@login_required(login_url='login')
+def event_stats(request, event_id):
+    # Return the Game (if any) associated with this Event and its player stats
+    event = get_object_or_404(Event, id=event_id, coach=request.user)
+
+    # There may be zero or more games linked; pick the most recent by date/created
+    game = Game.objects.filter(event=event).order_by('-date', '-created_at').first()
+    if not game:
+        return JsonResponse({'game': None, 'stats': {} })
+
+    stats = {}
+    for ps in game.player_stats.select_related('player').all():
+        stats[ps.player.id] = {
+            'player_id': ps.player.id,
+            'player_name': ps.player.name,
+            'two_pt_made': ps.two_pt_made,
+            'two_pt_att': ps.two_pt_att,
+            'three_pt_made': ps.three_pt_made,
+            'three_pt_att': ps.three_pt_att,
+            'ft_made': ps.ft_made,
+            'ft_att': ps.ft_att,
+            'rebound_off': ps.rebound_off,
+            'rebound_def': ps.rebound_def,
+            'assists': ps.assists,
+            'steals': ps.steals,
+            'blocks': ps.blocks,
+            'turnovers': ps.turnovers,
+            'fouls': ps.fouls,
+            'total_points': ps.total_points,
+        }
+
+    game_data = {
+        'id': game.id,
+        'team_id': game.team.id,
+        'date': game.date.strftime('%Y-%m-%d'),
+        'opponent': game.opponent,
+        'title': game.title,
+        'is_win': game.is_win,
+    }
+
+    return JsonResponse({'game': game_data, 'stats': stats})
+
+
+@login_required(login_url='login')
+def player_stats_history(request, player_id):
+    player = get_object_or_404(Player, id=player_id, coach=request.user)
+    stats_qs = PlayerStat.objects.filter(player=player).select_related('game').order_by('-game__date')
+    data = []
+    for s in stats_qs:
+        data.append({
+            'game_id': s.game.id,
+            'date': s.game.date.strftime('%Y-%m-%d'),
+            'opponent': s.game.opponent,
+            'team': s.game.team.name,
+            'two_pt_made': s.two_pt_made,
+            'two_pt_att': s.two_pt_att,
+            'three_pt_made': s.three_pt_made,
+            'three_pt_att': s.three_pt_att,
+            'ft_made': s.ft_made,
+            'ft_att': s.ft_att,
+            'rebound_off': s.rebound_off,
+            'rebound_def': s.rebound_def,
+            'assists': s.assists,
+            'steals': s.steals,
+            'blocks': s.blocks,
+            'turnovers': s.turnovers,
+            'fouls': s.fouls,
+            'total_points': s.total_points,
+        })
+    return JsonResponse({'player': {'id': player.id, 'name': player.name}, 'history': data})
+
+
+@login_required(login_url='login')
+def player_stats_page(request, player_id):
+    # Render the player history HTML page
+    player = get_object_or_404(Player, id=player_id, coach=request.user)
+    return render(request, 'team_mgmt/player_stats.html', {'player_id': player.id})
 
 # -------------------------------
-# Profile View (New/Restored - FIXES ATTRIBUTE ERROR)
+# Profile View (Handles Profile Details Edit)
 # -------------------------------
 @login_required(login_url='login')
 def profile_view(request):
-    # 🎯 FIX FOR SYNTAX ERROR (Cleaned whitespace on this line)
+    # Ensure a CoachProfile exists for the user
     coach_profile, created = CoachProfile.objects.get_or_create(user=request.user) 
 
     if request.method == "POST":
@@ -181,7 +385,7 @@ def profile_view(request):
         user.last_name = request.POST.get('last_name', user.last_name)
         user.email = request.POST.get('email', user.email)
         
-        # 🎯 FIXED LINE (coach_profile must have 'birthday' field in models.py)
+        # Update coach profile fields (assuming they exist in models.py)
         coach_profile.birthday = request.POST.get('birthday', coach_profile.birthday)
         coach_profile.gender = request.POST.get('gender', coach_profile.gender)
         
@@ -195,32 +399,33 @@ def profile_view(request):
         messages.success(request, "Your profile has been updated.")
         return redirect('profile')
 
+    # Render the profile details template
     return render(request, 'auth/profile.html', {'coach_profile': coach_profile, 'user': request.user})
 
 # -------------------------------
-# Change Password View (New/Restored)
+# Change Password View (Handles dedicated password change form)
 # -------------------------------
 @login_required(login_url="login")
-def change_password(request): # ❌ Removed the duplicate @login_required decorator
+def change_password(request):
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)  # Important for keeping user logged in
             messages.success(request, 'Your password was successfully updated!')
-            return redirect('profile')  # Redirect to profile or dashboard
+            return redirect('profile')  # Redirect back to the main profile page
         else:
             messages.error(request, 'Please correct the error below.')
     else:
         form = PasswordChangeForm(request.user)
     
+    # Render the dedicated password change template
     return render(request, 'auth/change_password.html', {'form': form})
 
 # -------------------------------
 # Register View
 # -------------------------------
 def register_view(request):
-    # ... (Register logic is long, assume it's correctly placed here) ...
     if request.method == "POST":
 
         username = (request.POST.get("username") or "").strip()
@@ -269,10 +474,9 @@ def register_view(request):
 
         CoachProfile.objects.create(user=user, sport=sport)
 
-        # 🎯 FIX: REMOVE AUTOMATIC LOGIN AND REDIRECT TO LOGIN PAGE
+        # Redirect to login page after successful registration
         messages.success(request, "Account created successfully! Please sign in below.")
-        return redirect("login") # 👈 Redirect to the login page
-        # END FIX
+        return redirect("login") 
 
     return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
 
@@ -286,6 +490,11 @@ def team_detail(request, team_id):
     players = Player.objects.filter(team=team)
     practices = Event.objects.filter(team=team, event_type='Practice').order_by('-date', '-time')
 
+    # Compute wins/losses from Game objects (simple on-demand computation)
+    games = Game.objects.filter(team=team).order_by('-date')
+    wins = games.filter(is_win=True).count()
+    losses = games.filter(is_win=False).count()
+
     return render(
         request,
         "team_mgmt/team_detail.html",
@@ -293,6 +502,9 @@ def team_detail(request, team_id):
             "team": team,
             "players": players,
             "practices": practices,
+            "games": games,
+            "wins": wins,
+            "losses": losses,
         },
     )
 
@@ -492,12 +704,52 @@ def delete_event(request, event_id):
     return redirect("coach_dashboard")
 
 
-# Schedule View
-def schedule_view(request):
-    # Your logic for fetching and rendering the schedule
-    return render(request, 'team_mgmt/schedule.html')
+# -------------------------------
+# Event Attendance (GET players + existing attendance, POST to save)
+# -------------------------------
+@login_required(login_url="login")
+def event_attendance(request, event_id):
+    event = get_object_or_404(Event, id=event_id, coach=request.user)
 
-# Stats View
-def stats_view(request):
-    # Your logic for fetching and rendering the statistics
-    return render(request, 'team_mgmt/stats.html')
+    if request.method == 'GET':
+        players = list(Player.objects.filter(team=event.team).order_by('last_name', 'first_name'))
+        existing = Attendance.objects.filter(event=event)
+        att_map = {a.player_id: a.present for a in existing}
+        players_data = []
+        for p in players:
+            players_data.append({
+                'id': p.id,
+                'name': p.name,
+                'jersey_number': p.jersey_number,
+                'present': att_map.get(p.id, False),
+            })
+        return JsonResponse({'event_id': event.id, 'team_id': event.team.id, 'players': players_data})
+
+    # POST: save attendance payload (expects JSON { attendance: { player_id: true/false } })
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+
+        attendance = payload.get('attendance', {})
+        updated = 0
+        for pid_str, present_val in attendance.items():
+            try:
+                pid = int(pid_str)
+            except Exception:
+                continue
+            try:
+                player = Player.objects.get(id=pid, team=event.team)
+            except Player.DoesNotExist:
+                continue
+
+            obj, created = Attendance.objects.update_or_create(
+                event=event, player=player,
+                defaults={'present': bool(present_val), 'recorded_by': request.user}
+            )
+            updated += 1
+
+        return JsonResponse({'success': True, 'updated': updated})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

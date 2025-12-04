@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Profile Settings{% endblock %}
+{% block title %}Profile Details{% endblock %}
 
 {# This block is EMPTY, removing the default Teams/Players navigation from base.html #}
 {% block header_nav %}{% endblock header_nav %}
@@ -8,9 +9,8 @@
 
 {% block content %}
 
-{# 1. CUSTOM PROFILE NAVIGATION (Placed to run immediately after the header_nav is skipped) #}
+{# 1. CUSTOM PROFILE NAVIGATION #}
 <div class="max-w-screen-2xl mx-auto px-6 w-full -mt-8"> 
-    {# -mt-8 pulls the content up to counteract base.html's default py-8 padding, placing it closer to the header #}
     <nav class="bg-white border-b border-gray-200 shadow-sm"> 
         <div class="flex space-x-8 px-6 -mb-px items-center">
             
@@ -32,7 +32,7 @@
     </nav>
 </div>
 
-{# 2. PROFILE DETAILS CARD (This part is inside the main-wrapper set by base.html) #}
+{# 2. PROFILE DETAILS CARD #}
 <div class="max-w-5xl mx-auto mt-8 bg-white rounded-2xl shadow-md border p-10">
     {% if messages %}
         <div class="mt-4">
@@ -51,7 +51,7 @@
                 {% if coach_profile.profile_picture %}
                     <img id="profileImage" src="{{ coach_profile.profile_picture.url }}" class="w-40 h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm">
                 {% else %}
-                    <img id="profileImage" src="/static/img/default-avatar.png" class="w-40 h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm">
+                    <img id="profileImage" src="{% static 'img/default-avatar.png' %}" class="w-40 h-40 rounded-full border-4 border-gray-200 object-cover shadow-sm">
                 {% endif %}
                 <label for="profilePicInput" id="changePictureLabel" class="mt-4 px-4 py-2 border text-sm rounded-xl cursor-pointer bg-white hover:bg-gray-50">
                     Change Picture
@@ -103,7 +103,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // ... (rest of the JS logic remains the same)
     const form = document.getElementById('profileForm');
     const editBtn = document.getElementById('editBtn');
     const saveBtn = document.getElementById('saveBtn');
@@ -113,15 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const changePictureLabel = document.getElementById('changePictureLabel');
     const originalValues = {};
 
-    // 1. Initial setup and store original values
     inputs.forEach(input => {
         originalValues[input.name] = input.value;
     });
 
-    // 2. Enable Edit Mode
     editBtn.addEventListener('click', () => {
         inputs.forEach(input => {
-            // Keep username and email read-only for security/consistency
             if (input.name !== 'username' && input.name !== 'email') {
                 input.disabled = false;
             }
@@ -130,29 +126,23 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.classList.remove('hidden');
         cancelBtn.classList.remove('hidden');
         
-        // Enable profile picture change
         changePictureLabel.classList.remove('opacity-50', 'pointer-events-none');
     });
 
-    // 3. Cancel Edit Mode
     cancelBtn.addEventListener('click', () => {
         inputs.forEach(input => {
             input.disabled = true;
-            // Reset to original values
             input.value = originalValues[input.name];
         });
         
-        // Hide save/cancel, show edit
         editBtn.classList.remove('hidden');
         saveBtn.classList.add('hidden');
         cancelBtn.classList.add('hidden');
 
-        // Disable profile picture change
         changePictureLabel.classList.add('opacity-50', 'pointer-events-none');
-        profilePicInput.value = ''; // Clear file input
+        profilePicInput.value = '';
     });
 
-    // 4. Preview Profile Picture on selection
     profilePicInput.addEventListener('change', function() {
         const file = this.files[0];
         if (file) {

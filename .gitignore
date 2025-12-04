@@ -1,7 +1,7 @@
 # Python
 *.pyc
-__pycache__/
 *.pyo
+__pycache__/
 *.pyd
 *.sqlite3
 *.env
@@ -32,7 +32,7 @@ Thumbs.db
 *.orig
 
 # Python virtual environment
-venv310/
+venv/
 .venv/
 
 # Environment files
