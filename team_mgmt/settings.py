@@ -6,7 +6,7 @@ import dj_database_url
 # ===========================
 # LOAD ENV VARIABLES
 # ===========================
-load_dotenv()
+load_dotenv() 
 
 # ===========================
 # BASE DIRECTORY
@@ -36,17 +36,28 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 # ===========================
 # DATABASE CONFIGURATION
 # ===========================
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL not set in .env")
+# Allow a local SQLite fallback for development when DEBUG=True
+USE_LOCAL_SQLITE = os.getenv('USE_LOCAL_SQLITE', 'True') == 'True'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+if DEBUG and USE_LOCAL_SQLITE:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL not set in .env")
+
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
 # ===========================
 # INSTALLED APPS
@@ -88,7 +99,6 @@ WSGI_APPLICATION = "team_mgmt.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        # Look inside top-level templates/ folder
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {

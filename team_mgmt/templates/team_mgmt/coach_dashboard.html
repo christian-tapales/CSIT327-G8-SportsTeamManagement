@@ -166,6 +166,23 @@
             </div>
         </div>
 
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <label class="text-sm text-gray-600 mr-2">Filter:</label>
+              <select id="attendanceFilter" onchange="filterPlayers()" class="h-9 pl-3 pr-6 rounded-xl border border-gray-200 bg-white text-sm">
+                <option value="all" selected>All attendance</option>
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="no_record">No record</option>
+              </select>
+              <div class="ml-4 flex items-center gap-3 text-sm">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span><span class="text-gray-600">Present</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="text-gray-600">Absent</span></div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-gray-300"></span><span class="text-gray-600">No record</span></div>
+              </div>
+            </div>
+          </div>
+
         {% if all_players %}
         <div class="bg-white rounded-2xl border overflow-hidden">
             <div class="overflow-x-auto">
@@ -176,13 +193,17 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jersey</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200" id="playersTableBody">
                         {% for player in all_players %}
-                        <tr class="player-row hover:bg-gray-50 transition-colors" data-team-id="{{ player.team.id }}">
+                        <tr class="player-row hover:bg-gray-50 transition-colors" data-team-id="{{ player.team.id }}"
+                          {% if player.latest_attendance %}
+                            {% if player.latest_attendance.present %} data-attendance="present" {% else %} data-attendance="absent" {% endif %}
+                          {% else %} data-attendance="none" {% endif %}>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
@@ -205,17 +226,45 @@
                                 {{ player.position|default:"—" }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                #{{ player.jersey_number|default:"—" }}
+                              #{{ player.jersey_number|default:"—" }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Active
+                              {% if player.latest_attendance %}
+                                {% if player.latest_attendance.present %}
+                                <div class="flex flex-col">
+                                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Present
+                                  </span>
+                                  <span class="text-xs text-gray-400">{{ player.latest_attendance.event_date }}</span>
+                                </div>
+                                {% else %}
+                                <div class="flex flex-col">
+                                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Absent
+                                  </span>
+                                  <span class="text-xs text-gray-400">{{ player.latest_attendance.event_date }}</span>
+                                </div>
+                                {% endif %}
+                              {% else %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">
+                                  No record
                                 </span>
+                              {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                              <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
+                              </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <div class="flex items-center gap-4 justify-end">
                                 <a href="{% url 'team_detail' player.team.id %}" class="text-blue-600 hover:text-blue-900 font-medium">
-                                    Manage in Team &rarr;
+                                  Manage in Team &rarr;
                                 </a>
+                                <a href="{% url 'player_stats_page' player.id %}" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                  View History &rarr;
+                                </a>
+                              </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -267,7 +316,7 @@
                         </h3>
                         <div class="grid gap-4">
                             {% for event in upcoming_events %}
-                            <div class="group bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-5 hover:shadow-md transition-all hover:border-gray-300">
+                            <div onclick="openEventDetails('{{ event.id }}')" class="group bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-5 hover:shadow-md transition-all hover:border-gray-300 cursor-pointer">
                                 <div class="flex-shrink-0 w-20 h-20 rounded-xl flex flex-col items-center justify-center border
                                     {% if event.event_type == 'Game' %} bg-blue-50 border-blue-100 text-blue-600
                                     {% else %} bg-green-50 border-green-100 text-green-600 {% endif %}">
@@ -292,8 +341,8 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                                    <button onclick="openDeleteEventModal('{{ event.id }}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                                    <button onclick="event.stopPropagation(); openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                                    <button onclick="event.stopPropagation(); openDeleteEventModal('{{ event.id }}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                                 </div>
                             </div>
                             {% endfor %}
@@ -306,7 +355,7 @@
                         <h3 class="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2"><span>🕰️</span> Past Events</h3>
                         <div class="grid gap-4 opacity-70 hover:opacity-100 transition-opacity">
                             {% for event in past_events %}
-                            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex items-center gap-5">
+                            <div onclick="openEventDetails('{{ event.id }}')" class="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex items-center gap-5 cursor-pointer">
                                 <div class="flex-shrink-0 w-20 h-20 rounded-xl flex flex-col items-center justify-center border bg-white border-gray-200 text-gray-500">
                                     <span class="text-xs font-bold uppercase tracking-wider">{{ event.date|date:"M" }}</span>
                                     <span class="text-2xl font-bold">{{ event.date|date:"d" }}</span>
@@ -318,8 +367,8 @@
                                     <p class="text-sm text-gray-500 mt-1">{{ event.location }} • {{ event.time|time:"g:i A" }}</p>
                                 </div>
                                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                                    <button onclick="openDeleteEventModal('{{ event.id }}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                                    <button onclick="event.stopPropagation(); openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')" class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                                    <button onclick="event.stopPropagation(); openDeleteEventModal('{{ event.id }}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                                 </div>
                             </div>
                             {% endfor %}
@@ -373,13 +422,55 @@
               <p class="text-gray-500">Manage your Statistics</p>
             </div>
         </div>
-        <section class="mt-8 bg-white border rounded-2xl p-16 flex flex-col items-center text-center">
-            <div class="text-5xl text-gray-300 mb-4">📊</div>
-            <h3 class="text-xl font-semibold text-gray-900">No Players and games available</h3>
-            <p class="mt-2 text-gray-500 max-w-md">
-                Add players on your team and a game in schedule first before you can start tracking statistics
-            </p>
-        </section>
+
+        <div class="mt-6 bg-white p-6 rounded-2xl border">
+          <div class="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label class="text-sm">Select Team</label>
+                  <select id="statsTeam" class="w-full rounded border px-3 py-2">
+                    <option value="">-- Select Team --</option>
+                    {% for t in teams %}
+                    <option value="{{ t.id }}">{{ t.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+            <div>
+              <label class="text-sm">Game Title</label>
+              <input id="statsTitle" class="w-full rounded border px-3 py-2" placeholder="Game title (optional)" />
+            </div>
+            <div>
+              <label class="text-sm">Opponent</label>
+              <input id="statsOpponent" class="w-full rounded border px-3 py-2" placeholder="Opponent name" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="text-sm">Date</label>
+              <input id="statsDate" type="date" class="w-full rounded border px-3 py-2" />
+            </div>
+            <div class="flex items-end">
+              <label class="text-sm w-full">&nbsp;</label>
+              <a id="loadPlayersBtn" class="ml-auto text-sm text-blue-600 hover:underline cursor-pointer">Load Players</a>
+            </div>
+            <div class="flex items-end justify-end">
+              <label class="text-sm w-full">&nbsp;</label>
+              <div class="flex items-center gap-2">
+                <button id="winBtn" class="px-4 py-3 bg-green-500 text-white rounded text-lg font-semibold">Win</button>
+                <button id="lossBtn" class="px-3 py-2 bg-red-500 text-white rounded">Loss</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="statsTableWrapper" class="overflow-x-auto">
+            <!-- Table injected by JS -->
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button id="saveStatsBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Save Game Stats</button>
+          </div>
+        </div>
+
     </div>
 
   </main>
@@ -630,6 +721,74 @@
       </div>
   </div>
 
+  <div id="eventDetailsModal" class="hidden fixed inset-0 bg-black/60 z-50 overflow-y-auto">
+    <div class="min-h-full flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
+        <div class="flex items-start justify-between px-6 py-4 border-b">
+          <div>
+            <h3 id="det_title" class="text-2xl font-semibold">Event Title</h3>
+            <p id="det_sub" class="mt-1 text-sm text-gray-500">Event details</p>
+          </div>
+          <button onclick="hideEventDetails()" type="button" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+
+        <div class="px-6 py-4">
+          <div class="flex gap-3 mb-4">
+            <button id="btn-tab-details" onclick="showEventDetailsTab('details')" class="px-3 py-1 rounded-md bg-gray-100 text-sm font-medium">Details</button>
+            <button onclick="showEventDetailsTab('attendance')" class="px-3 py-1 rounded-md bg-gray-50 text-sm font-medium">Mark Attendance</button>
+            <button onclick="showEventDetailsTab('stats')" class="px-3 py-1 rounded-md bg-gray-50 text-sm font-medium">Stats</button>
+          </div>
+
+          <div id="tab-details">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-gray-500">Event Type</p>
+                <p id="det_type" class="font-medium">Game</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Date</p>
+                <p id="det_date" class="font-medium">—</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Time</p>
+                <p id="det_time" class="font-medium">—</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Location</p>
+                <p id="det_location" class="font-medium">—</p>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <p class="text-xs text-gray-500">Opponent / Title</p>
+              <p id="det_opponent" class="font-medium">—</p>
+            </div>
+
+            <div class="mt-4">
+              <p class="text-xs text-gray-500">Notes</p>
+              <p id="det_notes" class="text-sm text-gray-700">—</p>
+            </div>
+          </div>
+
+          <div id="tab-attendance" class="hidden">
+            <p class="text-sm text-gray-600 mb-3">Mark attendance for players on the selected team</p>
+            <div id="attendanceContainer" class="space-y-2">
+              <!-- Player rows will be injected here -->
+            </div>
+            <div class="mt-4 flex justify-end">
+              <button id="saveAttendanceBtn" onclick="saveAttendance()" class="px-4 py-2 rounded-xl bg-gray-900 text-white">Save Attendance</button>
+            </div>
+          </div>
+
+          <div id="tab-stats" class="hidden">
+            <p class="text-sm text-gray-600">Game statistics will be shown here (placeholder).</p>
+            <div class="mt-3 text-sm text-gray-700">No stats yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // --- Data passed from Django ---
     const rawEvents = '{{ events_json|safe }}'; 
@@ -655,16 +814,23 @@
     // --- Filter Players ---
     function filterPlayers() {
         const filterValue = document.getElementById('playerTeamFilter').value;
+      const attFilter = document.getElementById('attendanceFilter') ? document.getElementById('attendanceFilter').value : 'all';
         const rows = document.querySelectorAll('.player-row');
         const noPlayersMsg = document.getElementById('noPlayersMessage');
         let visibleCount = 0;
         rows.forEach(row => {
-            if (filterValue === 'all' || row.dataset.teamId === filterValue) {
-                row.style.display = ''; 
-                visibleCount++;
-            } else {
-                row.style.display = 'none'; 
-            }
+        let teamMatch = (filterValue === 'all' || row.dataset.teamId === filterValue);
+        let attMatch = true;
+        if (attFilter === 'present') attMatch = row.dataset.attendance === 'present';
+        else if (attFilter === 'absent') attMatch = row.dataset.attendance === 'absent';
+        else if (attFilter === 'no_record') attMatch = row.dataset.attendance === 'none';
+
+        if (teamMatch && attMatch) {
+          row.style.display = ''; 
+          visibleCount++;
+        } else {
+          row.style.display = 'none'; 
+        }
         });
         if (noPlayersMsg) {
             if (visibleCount === 0 && rows.length > 0) noPlayersMsg.classList.remove('hidden');
@@ -728,16 +894,16 @@
             let eventsHTML = "";
             if (daysEvents.length > 0) {
                 daysEvents.sort((a, b) => a.time.localeCompare(b.time));
-                daysEvents.forEach(e => {
-                    const bgClass = e.type === 'Game' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-green-100 text-green-700 border-green-200';
-                    eventsHTML += `
-                        <div onclick="openEditEventModal('${e.id}', '${e.title}', '${e.type}', '${e.date}', '${e.time}', '${e.location}', '${e.opponent || ''}', '${e.notes || ''}', '${e.team_id}')" 
-                             class="${bgClass} border px-2 py-1 rounded-md text-xs font-medium truncate cursor-pointer hover:opacity-80 transition-opacity">
-                            <span class="font-bold mr-1">${e.time.slice(0, 5)}</span>
-                            ${e.type === 'Game' ? 'vs ' + (e.opponent || 'TBD') : e.title}
-                        </div>
-                    `;
-                });
+              daysEvents.forEach(e => {
+                const bgClass = e.type === 'Game' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-green-100 text-green-700 border-green-200';
+                eventsHTML += `
+                  <div onclick="openEventDetails('${e.id}')" 
+                     class="${bgClass} border px-2 py-1 rounded-md text-xs font-medium truncate cursor-pointer hover:opacity-80 transition-opacity">
+                    <span class="font-bold mr-1">${e.time.slice(0, 5)}</span>
+                    ${e.type === 'Game' ? 'vs ' + (e.opponent || 'TBD') : e.title}
+                  </div>
+                `;
+              });
             }
 
             cell.innerHTML = dayHTML + `<div class="flex flex-col gap-1 mt-1">${eventsHTML}</div>`;
@@ -781,6 +947,207 @@
     function hideDeleteEventModal() { deleteEventModal.classList.add('hidden'); }
     if(cancelDeleteEventBtn) cancelDeleteEventBtn.addEventListener('click', hideDeleteEventModal);
 
+    // --- Event Details Modal Logic ---
+    let currentEventId = null;
+    function openEventDetails(id) {
+      const ev = allEvents.find(x => String(x.id) === String(id));
+      if (!ev) return;
+      currentEventId = ev.id;
+      // populate details
+      document.getElementById('det_title').innerText = ev.title || (ev.type === 'Game' ? 'Game' : 'Event');
+      document.getElementById('det_type').innerText = ev.type || '';
+      document.getElementById('det_date').innerText = ev.date || '';
+      document.getElementById('det_time').innerText = ev.time || '';
+      document.getElementById('det_location').innerText = ev.location || '';
+      document.getElementById('det_notes').innerText = ev.notes || '';
+      document.getElementById('det_opponent').innerText = ev.opponent || (ev.type === 'Game' ? 'TBD' : '—');
+      // clear attendance container until loaded
+      const ac = document.getElementById('attendanceContainer'); if (ac) ac.innerHTML = '';
+      // set modal visible
+      const md = document.getElementById('eventDetailsModal');
+      if (md) md.classList.remove('hidden');
+      // default to details tab
+      showEventDetailsTab('details');
+    }
+
+    function hideEventDetails() { const md = document.getElementById('eventDetailsModal'); if (md) md.classList.add('hidden'); }
+
+    function showEventDetailsTab(tab) {
+      const t1 = document.getElementById('tab-details');
+      const t2 = document.getElementById('tab-attendance');
+      const t3 = document.getElementById('tab-stats');
+      document.getElementById('btn-tab-details').classList.remove('text-gray-500');
+      if (tab === 'details') { t1.classList.remove('hidden'); t2.classList.add('hidden'); t3.classList.add('hidden'); }
+      else if (tab === 'attendance') { t1.classList.add('hidden'); t2.classList.remove('hidden'); t3.classList.add('hidden'); loadAttendance(currentEventId); }
+      else { t1.classList.add('hidden'); t2.classList.add('hidden'); t3.classList.remove('hidden'); loadEventStats(currentEventId); }
+    }
+
+    // --- Attendance Helpers ---
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+    }
+
+    function loadAttendance(eventId) {
+      if (!eventId) return;
+      const url = `/coach/event/${eventId}/attendance/`;
+      fetch(url, { method: 'GET', credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          const container = document.getElementById('attendanceContainer');
+          if (!container) return;
+          container.innerHTML = '';
+          if (!data.players || data.players.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-600">No players found for this team.</div>';
+            return;
+          }
+          data.players.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between';
+            row.innerHTML = `
+              <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">${(p.name && p.name[0]) || ''}</div>
+                <div>
+                  <div class="text-sm font-medium">${p.name}</div>
+                  <div class="text-xs text-gray-400">#${p.jersey_number || '—'}</div>
+                </div>
+              </div>
+              <div>
+                <label class="inline-flex items-center gap-2">
+                  <input type="checkbox" data-player-id="${p.id}" ${p.present ? 'checked' : ''} class="attendance-checkbox" />
+                  <span class="text-sm text-gray-600">Present</span>
+                </label>
+              </div>
+            `;
+            container.appendChild(row);
+          });
+        })
+        .catch(err => console.error('Error loading attendance', err));
+    }
+
+    function saveAttendance() {
+      if (!currentEventId) return createToast('No event selected.', 'error');
+      const checkboxes = document.querySelectorAll('.attendance-checkbox');
+      const payload = { attendance: {} };
+      checkboxes.forEach(cb => {
+        const pid = cb.dataset.playerId;
+        payload.attendance[pid] = cb.checked;
+      });
+
+      const saveBtn = document.getElementById('saveAttendanceBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.dataset.origText = saveBtn.innerText;
+        saveBtn.innerText = 'Saving...';
+        saveBtn.classList.add('opacity-60', 'cursor-not-allowed');
+      }
+
+      const url = `/coach/event/${currentEventId}/attendance/`;
+      fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken') || ''
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (r.ok && data.success) {
+          createToast('Attendance saved', 'success');
+          loadAttendance(currentEventId);
+        } else {
+          console.error('Save error', data);
+          createToast('Error saving attendance', 'error');
+        }
+      })
+      .catch(err => { console.error('Save attendance error', err); createToast('Network error while saving', 'error'); })
+      .finally(() => {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerText = saveBtn.dataset.origText || 'Save Attendance';
+          saveBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    // --- Event Stats Loader ---
+    function loadEventStats(eventId) {
+      const container = document.getElementById('tab-stats');
+      if (!eventId || !container) return;
+      container.innerHTML = '<div class="text-sm text-gray-600">Loading stats…</div>';
+      const url = `/coach/event/${eventId}/stats/`;
+      fetch(url, { method: 'GET', credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.game) {
+            container.innerHTML = '<p class="text-sm text-gray-600">No stats recorded for this event.</p>';
+            return;
+          }
+          const g = data.game;
+          let html = `<div class="text-sm text-gray-700 mb-2"><strong>${g.title || ''}</strong> — ${g.date} vs ${g.opponent || 'TBD'} ${g.is_win ? '<span class="ml-2 text-green-600 font-semibold">(Win)</span>' : ''}</div>`;
+          html += '<div class="overflow-x-auto"><table class="w-full text-sm border-collapse"><thead class="bg-gray-50"><tr><th class="p-2 border text-left">Player</th><th class="p-2 border">2PT</th><th class="p-2 border">3PT</th><th class="p-2 border">FT</th><th class="p-2 border">Reb</th><th class="p-2 border">A</th><th class="p-2 border">ST</th><th class="p-2 border">BL</th><th class="p-2 border">TO</th><th class="p-2 border">F</th><th class="p-2 border">PTS</th></tr></thead><tbody>';
+          const stats = data.stats || {};
+          Object.keys(stats).forEach(pid => {
+            const s = stats[pid];
+            const two = `${s.two_pt_att || 0}-${s.two_pt_made || 0}`;
+            const three = `${s.three_pt_att || 0}-${s.three_pt_made || 0}`;
+            const ft = `${s.ft_att || 0}-${s.ft_made || 0}`;
+            const reb = `${s.rebound_off || 0}/${s.rebound_def || 0}`;
+            html += `<tr class="border-b"><td class="p-2">${s.player_name || ''}</td><td class="p-2 text-center">${two}</td><td class="p-2 text-center">${three}</td><td class="p-2 text-center">${ft}</td><td class="p-2 text-center">${reb}</td><td class="p-2 text-center">${s.assists || 0}</td><td class="p-2 text-center">${s.steals || 0}</td><td class="p-2 text-center">${s.blocks || 0}</td><td class="p-2 text-center">${s.turnovers || 0}</td><td class="p-2 text-center">${s.fouls || 0}</td><td class="p-2 text-center">${s.total_points || 0}</td></tr>`;
+          });
+          html += '</tbody></table></div>';
+          container.innerHTML = html;
+        })
+        .catch(err => {
+          console.error('Error loading event stats', err);
+          container.innerHTML = '<p class="text-sm text-red-600">Error loading stats.</p>';
+        });
+    }
+
+    // --- Simple Toast ---
+    function createToast(message, type) {
+      // type: success | error | info
+      let toastRoot = document.getElementById('toastRoot');
+      if (!toastRoot) {
+        toastRoot = document.createElement('div');
+        toastRoot.id = 'toastRoot';
+        toastRoot.style.position = 'fixed';
+        toastRoot.style.right = '20px';
+        toastRoot.style.top = '20px';
+        toastRoot.style.zIndex = '9999';
+        document.body.appendChild(toastRoot);
+      }
+      const el = document.createElement('div');
+      el.className = 'rounded-md px-4 py-2 mb-3 text-sm text-white shadow-lg';
+      el.style.minWidth = '160px';
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 200ms ease-in-out, transform 200ms ease-in-out';
+      el.style.transform = 'translateY(-6px)';
+      if (type === 'success') el.style.background = '#16a34a';
+      else if (type === 'error') el.style.background = '#dc2626';
+      else el.style.background = '#374151';
+      el.innerText = message;
+      toastRoot.appendChild(el);
+      // animate in
+      requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+      setTimeout(() => {
+        el.style.opacity = '0'; el.style.transform = 'translateY(-6px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
     // --- Main Init ---
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -817,9 +1184,13 @@
               hideTeamModal();
               hideEventModal();
               hideEditEventModal();
-              hideDeleteEventModal();
+            hideDeleteEventModal();
+            hideEventDetails();
           }
       });
+        // Close details modal when clicking outside content
+        const detailsModalEl = document.getElementById('eventDetailsModal');
+        if (detailsModalEl) detailsModalEl.addEventListener('click', (e) => { if (e.target === detailsModalEl) hideEventDetails(); });
     });
   </script>
 <script>
@@ -830,6 +1201,7 @@
       hideEventModal();
       hideEditEventModal();
       hideDeleteEventModal();
+      hideEventDetails();
     }
   });
 
@@ -846,6 +1218,165 @@
   window.addEventListener("click", function(event) {
     if (!settingsButton.contains(event.target) && !dropdown.contains(event.target)) {
       dropdown.classList.add("hidden");
+    }
+  });
+</script>
+
+<script>
+  // Statistics embedded in dashboard: reuse players_by_team passed in context
+  const playersByTeam = {{ players_by_team|safe }};
+  let statsCurrentTeam = null;
+  let statsIsWin = false;
+
+  function createTableForTeam_dashboard(teamId) {
+    const players = playersByTeam[teamId] || [];
+    const wrapper = document.getElementById('statsTableWrapper');
+    if (!wrapper) return;
+    if (!players.length) {
+      wrapper.innerHTML = '<div class="p-6 text-sm text-gray-600">No players for selected team.</div>';
+      return;
+    }
+
+    let html = '<table class="w-full border-collapse">';
+    html += '<thead>';
+    html += '<tr class="bg-gray-100"><th class="p-2 border" rowspan="2">Player</th><th class="p-2 border" rowspan="2">#</th>';
+    html += '<th class="p-2 border text-center" colspan="2">2-Point</th>';
+    html += '<th class="p-2 border text-center" colspan="2">3-Point</th>';
+    html += '<th class="p-2 border text-center" colspan="2">Free Throw</th>';
+    html += '<th class="p-2 border text-center" colspan="2">Rebound</th>';
+    html += '<th class="p-2 border" rowspan="2">Assists</th><th class="p-2 border" rowspan="2">Steals</th><th class="p-2 border" rowspan="2">Blocks</th>';
+    html += '<th class="p-2 border" rowspan="2">Turnovers</th><th class="p-2 border" rowspan="2">Fouls</th><th class="p-2 border" rowspan="2">Total Points</th></tr>';
+    html += '<tr class="bg-gray-100">';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Off.</th><th class="p-2 border">Def.</th>';
+    html += '</tr></thead>';
+    html += '<tbody>';
+    players.forEach(p => {
+      html += `<tr class="border-b"><td class="p-2">${p.name}</td><td class="p-2">${p.jersey}</td>`;
+      for (let i=0;i<14;i++) {
+        if (i === 13) {
+          html += '<td class="p-1 border text-center"><input readonly data-player="'+p.id+'" data-col="'+i+'" class="stat-input stat-total w-20 text-center bg-gray-50" /></td>';
+        } else {
+          html += '<td class="p-1 border text-center"><input data-player="'+p.id+'" data-col="'+i+'" class="stat-input w-20 text-center" /></td>';
+        }
+      }
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    html += '<tfoot><tr class="bg-gray-50">';
+    html += '<td class="p-2 border font-semibold">Totals</td><td class="p-2 border"></td>';
+    for (let c=0;c<14;c++) html += `<td class="p-2 border text-center" id="colTotal_${c}">0</td>`;
+    html += '</tr></tfoot></table>';
+    wrapper.innerHTML = html;
+    updateTotals_dashboard();
+  }
+
+  function updateTotals_dashboard() {
+    const totals = Array.from({length:14}, () => 0);
+    document.querySelectorAll('#statsTableWrapper .stat-input').forEach(inp => {
+      const col = parseInt(inp.dataset.col, 10);
+      const val = parseInt(inp.value || 0);
+      if (!isNaN(col) && col >= 0 && col < 14) totals[col] += isNaN(val) ? 0 : val;
+    });
+    for (let c=0;c<14;c++) {
+      const el = document.getElementById('colTotal_'+c);
+      if (el) el.innerText = totals[c];
+    }
+  }
+
+  // bind events if elements exist
+  const loadBtn = document.getElementById('loadPlayersBtn');
+  if (loadBtn) loadBtn.addEventListener('click', () => {
+    const tid = document.getElementById('statsTeam').value;
+    if (!tid) return alert('Select a team first');
+    statsCurrentTeam = tid;
+    createTableForTeam_dashboard(tid);
+  });
+
+  const winBtn = document.getElementById('winBtn');
+  const lossBtn = document.getElementById('lossBtn');
+  if (winBtn) winBtn.addEventListener('click', () => { statsIsWin = true; winBtn.classList.add('ring-2','ring-green-400'); if (lossBtn) lossBtn.classList.remove('ring-2','ring-red-400'); });
+  if (lossBtn) lossBtn.addEventListener('click', () => { statsIsWin = false; lossBtn.classList.add('ring-2','ring-red-400'); if (winBtn) winBtn.classList.remove('ring-2','ring-green-400'); });
+
+  const saveBtn = document.getElementById('saveStatsBtn');
+  if (saveBtn) saveBtn.addEventListener('click', () => {
+    const teamId = statsCurrentTeam || (document.getElementById('statsTeam') && document.getElementById('statsTeam').value);
+    const date = document.getElementById('statsDate') ? document.getElementById('statsDate').value : null;
+    if (!teamId || !date) return alert('Please select team and date');
+
+    const title = document.getElementById('statsTitle') ? document.getElementById('statsTitle').value : '';
+    const opponent = document.getElementById('statsOpponent') ? document.getElementById('statsOpponent').value : '';
+
+    const inputs = document.querySelectorAll('#statsTableWrapper .stat-input');
+    const stats = {};
+    // Column order: 0=2PT Att,1=2PT Made,2=3PT Att,3=3PT Made,4=FT Att,5=FT Made,6=Reb Off,7=Reb Def,8=Assists,9=Steals,10=Blocks,11=Turnovers,12=Fouls,13=Total
+    inputs.forEach((inp) => {
+      const pid = inp.dataset.player;
+      if (!stats[pid]) stats[pid] = {};
+      const col = parseInt(inp.dataset.col, 10);
+      const val = parseInt(inp.value || 0);
+      switch(col) {
+        case 0: stats[pid]['two_pt_att'] = val; break;
+        case 1: stats[pid]['two_pt_made'] = val; break;
+        case 2: stats[pid]['three_pt_att'] = val; break;
+        case 3: stats[pid]['three_pt_made'] = val; break;
+        case 4: stats[pid]['ft_att'] = val; break;
+        case 5: stats[pid]['ft_made'] = val; break;
+        case 6: stats[pid]['rebound_off'] = val; break;
+        case 7: stats[pid]['rebound_def'] = val; break;
+        case 8: stats[pid]['assists'] = val; break;
+        case 9: stats[pid]['steals'] = val; break;
+        case 10: stats[pid]['blocks'] = val; break;
+        case 11: stats[pid]['turnovers'] = val; break;
+        case 12: stats[pid]['fouls'] = val; break;
+        case 13: stats[pid]['total_points'] = val; break;
+      }
+    });
+
+    Object.keys(stats).forEach(pid => {
+      const s = stats[pid];
+      s['fouls'] = parseInt(s['fouls'] || 0);
+      const tp = (s['two_pt_made'] || 0) * 2 + (s['three_pt_made'] || 0) * 3 + (s['ft_made'] || 0);
+      if (!s['total_points']) s['total_points'] = tp;
+    });
+
+    updateTotals_dashboard();
+
+    const payload = { game: { team_id: teamId, date: date, title: title, opponent: opponent, is_win: statsIsWin }, stats };
+
+    fetch('/coach/stats/save/', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
+      body: JSON.stringify(payload)
+    }).then(r => r.json()).then(d => {
+      if (d && d.success) {
+        alert('Saved '+d.saved+' player stats');
+      } else {
+        alert('Error saving stats'); console.error(d);
+      }
+    }).catch(err => { alert('Network error'); console.error(err); });
+  });
+
+  // live totals when inputs change — recompute per-player total then update footer
+  function recomputePlayerTotal_dashboard(pid) {
+    const getVal = (col) => {
+      const el = document.querySelector('#statsTableWrapper .stat-input[data-player="'+pid+'"][data-col="'+col+'"]');
+      return el ? parseInt(el.value || 0) : 0;
+    };
+    const two_made = getVal(1);
+    const three_made = getVal(3);
+    const ft_made = getVal(5);
+    const total = (two_made || 0) * 2 + (three_made || 0) * 3 + (ft_made || 0);
+    const totalEl = document.querySelector('#statsTableWrapper .stat-input[data-player="'+pid+'"][data-col="13"]');
+    if (totalEl) totalEl.value = total;
+  }
+
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('stat-input')) {
+      const pid = e.target.dataset.player;
+      if (pid) recomputePlayerTotal_dashboard(pid);
+      updateTotals_dashboard();
     }
   });
 </script>

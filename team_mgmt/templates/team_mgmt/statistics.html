@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Statistics • Sports Team Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-screen-2xl mx-auto px-6 py-8">
+    <h2 class="text-2xl font-semibold mb-4">Statistics Each Game</h2>
+
+    <div class="bg-white p-4 rounded-lg shadow">
+      <div class="grid grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="text-sm">Select Team</label>
+          <select id="statsTeam" class="w-full rounded border px-3 py-2">
+            <option value="">-- Select Team --</option>
+            {% for t in teams %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-sm">Game Title</label>
+          <input id="statsTitle" class="w-full rounded border px-3 py-2" placeholder="Game title (optional)" />
+        </div>
+        <div>
+          <label class="text-sm">Opponent</label>
+          <input id="statsOpponent" class="w-full rounded border px-3 py-2" placeholder="Opponent name" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="text-sm">Date</label>
+          <input id="statsDate" type="date" class="w-full rounded border px-3 py-2" />
+        </div>
+        <div class="flex items-end">
+          <label class="text-sm w-full">&nbsp;</label>
+          <a id="loadPlayersBtn" class="ml-auto text-sm text-blue-600 hover:underline cursor-pointer">Load Players</a>
+        </div>
+        <div class="flex items-end justify-end">
+          <label class="text-sm w-full">&nbsp;</label>
+          <div class="flex items-center gap-2">
+            <button id="winBtn" class="px-3 py-2 bg-green-500 text-white rounded">Win</button>
+            <button id="lossBtn" class="px-3 py-2 bg-red-500 text-white rounded">Loss</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="statsTableWrapper" class="overflow-x-auto">
+        <!-- Table injected by JS -->
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <button id="saveStatsBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Save Game Stats</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const playersByTeam = {{ players_by_team|safe }};
+  let currentTeam = null;
+  let isWin = false;
+
+  function createTableForTeam(teamId) {
+    const players = playersByTeam[teamId] || [];
+    const wrapper = document.getElementById('statsTableWrapper');
+    if (!players.length) {
+      wrapper.innerHTML = '<div class="p-6 text-sm text-gray-600">No players for selected team.</div>';
+      return;
+    }
+
+    let html = '<table class="w-full border-collapse">';
+    html += '<thead>';
+    html += '<tr class="bg-gray-100"><th class="p-2 border" rowspan="2">Player</th><th class="p-2 border" rowspan="2">#</th>';
+    html += '<th class="p-2 border text-center" colspan="2">2-Point</th>';
+    html += '<th class="p-2 border text-center" colspan="2">3-Point</th>';
+    html += '<th class="p-2 border text-center" colspan="2">Free Throw</th>';
+    html += '<th class="p-2 border text-center" colspan="2">Rebound</th>';
+    html += '<th class="p-2 border" rowspan="2">Assists</th><th class="p-2 border" rowspan="2">Steals</th><th class="p-2 border" rowspan="2">Blocks</th>';
+    html += '<th class="p-2 border" rowspan="2">Turnovers</th><th class="p-2 border" rowspan="2">Fouls</th><th class="p-2 border" rowspan="2">Total Points</th></tr>';
+    html += '<tr class="bg-gray-100">';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Att.</th><th class="p-2 border">Made</th>';
+    html += '<th class="p-2 border">Off.</th><th class="p-2 border">Def.</th>';
+    html += '</tr></thead>';
+    html += '<tbody>';
+    players.forEach(p => {
+      html += `<tr class="border-b"><td class="p-2">${p.name}</td><td class="p-2">${p.jersey}</td>`;
+      for (let i=0;i<14;i++) {
+        if (i === 13) {
+          // total points - readonly, auto-calculated
+          html += '<td class="p-1 border text-center"><input readonly data-player="'+p.id+'" data-col="'+i+'" class="stat-input stat-total w-20 text-center bg-gray-50" /></td>';
+        } else {
+          html += '<td class="p-1 border text-center"><input data-player="'+p.id+'" data-col="'+i+'" class="stat-input w-20 text-center" /></td>';
+        }
+      }
+      html += '</tr>';
+    });
+    html += '</tbody>';
+    // totals footer
+    html += '<tfoot><tr class="bg-gray-50">';
+    html += '<td class="p-2 border font-semibold">Totals</td><td class="p-2 border"></td>';
+    for (let c=0;c<14;c++) html += `<td class="p-2 border text-center" id="colTotal_${c}">0</td>`;
+    html += '</tr></tfoot></table>';
+    wrapper.innerHTML = html;
+    // initialize totals after table render
+    updateTotals();
+  }
+
+  document.getElementById('loadPlayersBtn').addEventListener('click', () => {
+    const tid = document.getElementById('statsTeam').value;
+    if (!tid) return alert('Select a team first');
+    currentTeam = tid;
+    createTableForTeam(tid);
+  });
+
+  document.getElementById('winBtn').addEventListener('click', () => { isWin = true; document.getElementById('winBtn').classList.add('ring-2','ring-green-400'); document.getElementById('lossBtn').classList.remove('ring-2','ring-red-400'); });
+  document.getElementById('lossBtn').addEventListener('click', () => { isWin = false; document.getElementById('lossBtn').classList.add('ring-2','ring-red-400'); document.getElementById('winBtn').classList.remove('ring-2','ring-green-400'); });
+
+  document.getElementById('saveStatsBtn').addEventListener('click', () => {
+    const teamId = currentTeam || document.getElementById('statsTeam').value;
+    const date = document.getElementById('statsDate').value;
+    if (!teamId || !date) return alert('Please select team and date');
+
+    const title = document.getElementById('statsTitle').value;
+    const opponent = document.getElementById('statsOpponent').value;
+
+    const inputs = document.querySelectorAll('.stat-input');
+    const stats = {};
+    // Column order: 0=2PT Att,1=2PT Made,2=3PT Att,3=3PT Made,4=FT Att,5=FT Made,6=Reb Off,7=Reb Def,8=Assists,9=Steals,10=Blocks,11=Turnovers,12=Fouls,13=Total
+    inputs.forEach((inp) => {
+      const pid = inp.dataset.player;
+      if (!stats[pid]) stats[pid] = {};
+      const col = parseInt(inp.dataset.col, 10);
+      const val = parseInt(inp.value || 0);
+      switch(col) {
+        case 0: stats[pid]['two_pt_att'] = val; break;
+        case 1: stats[pid]['two_pt_made'] = val; break;
+        case 2: stats[pid]['three_pt_att'] = val; break;
+        case 3: stats[pid]['three_pt_made'] = val; break;
+        case 4: stats[pid]['ft_att'] = val; break;
+        case 5: stats[pid]['ft_made'] = val; break;
+        case 6: stats[pid]['rebound_off'] = val; break;
+        case 7: stats[pid]['rebound_def'] = val; break;
+        case 8: stats[pid]['assists'] = val; break;
+        case 9: stats[pid]['steals'] = val; break;
+        case 10: stats[pid]['blocks'] = val; break;
+        case 11: stats[pid]['turnovers'] = val; break;
+        case 12: stats[pid]['fouls'] = val; break;
+        case 13: stats[pid]['total_points'] = val; break;
+      }
+    });
+
+    // compute default total_points if left empty
+    Object.keys(stats).forEach(pid => {
+      const s = stats[pid];
+      s['fouls'] = parseInt(s['fouls'] || 0);
+      const tp = (s['two_pt_made'] || 0) * 2 + (s['three_pt_made'] || 0) * 3 + (s['ft_made'] || 0);
+      if (!s['total_points']) s['total_points'] = tp;
+    });
+
+    // update totals in the footer
+    updateTotals();
+
+    const payload = { game: { team_id: teamId, date: date, title: title, opponent: opponent, is_win: isWin }, stats };
+
+    fetch('/coach/stats/save/', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
+      body: JSON.stringify(payload)
+    }).then(r => r.json()).then(d => {
+      if (d && d.success) {
+        alert('Saved '+d.saved+' player stats');
+      } else {
+        alert('Error saving stats');
+        console.error(d);
+      }
+    }).catch(err => { alert('Network error'); console.error(err); });
+  });
+
+  function recomputePlayerTotal(pid) {
+    // compute total points: 2*two_pt_made + 3*three_pt_made + ft_made
+    const getVal = (col) => {
+      const el = document.querySelector('.stat-input[data-player="'+pid+'"][data-col="'+col+'"]');
+      return el ? parseInt(el.value || 0) : 0;
+    };
+    const two_made = getVal(1);
+    const three_made = getVal(3);
+    const ft_made = getVal(5);
+    const total = (two_made || 0) * 2 + (three_made || 0) * 3 + (ft_made || 0);
+    const totalEl = document.querySelector('.stat-input[data-player="'+pid+'"][data-col="13"]');
+    if (totalEl) totalEl.value = total;
+  }
+
+  function updateTotals() {
+    const totals = Array.from({length:14}, () => 0);
+    document.querySelectorAll('.stat-input').forEach(inp => {
+      const col = parseInt(inp.dataset.col, 10);
+      const val = parseInt(inp.value || 0);
+      if (!isNaN(col) && col >= 0 && col < 14) totals[col] += isNaN(val) ? 0 : val;
+    });
+    for (let c=0;c<14;c++) {
+      const el = document.getElementById('colTotal_'+c);
+      if (el) el.innerText = totals[c];
+    }
+  }
+
+  // recalc totals live when inputs change
+  document.addEventListener('input', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('stat-input')) {
+      const pid = e.target.dataset.player;
+      if (pid) recomputePlayerTotal(pid);
+      updateTotals();
+    }
+  });
+</script>
+</body>
+</html>
