@@ -1,4 +1,7 @@
-<!doctype html>
+
+import os
+
+content = """<!doctype html>
 <html lang="en">
 
 <head>
@@ -644,3 +647,14 @@
 </body>
 
 </html>
+"""
+
+file_path = os.path.join(os.getcwd(), 'team_mgmt', 'templates', 'team_mgmt', 'team_detail.html')
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print(f"Successfully force-wrote {len(content)} bytes to {file_path}")
+print("Verification of critical lines (player table):")
+for line in content.splitlines():
+    if "default:" in line and "player." in line and "{{" in line:
+        print(f"CHECK: {line.strip()}")

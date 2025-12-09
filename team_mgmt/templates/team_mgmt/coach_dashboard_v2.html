@@ -1,0 +1,1749 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Coach Dashboard • Sports Team Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Simple fade animation for tab switching */
+    .tab-content {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Calendar Scrollbar for many events */
+    .calendar-day {
+      min-height: 120px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    /* Hide scrollbar for cleaner look */
+    .calendar-day::-webkit-scrollbar {
+      display: none;
+    }
+
+    .calendar-day {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <header class="bg-white border-b">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🏆</span>
+        <div>
+          <h1 class="text-xl font-semibold">Sports Team Management</h1>
+          <p class="text-sm text-gray-500">
+            Welcome back, {{ request.user.first_name|default:request.user.username|default:"coach" }}!
+          </p>
+        </div>
+      </div>
+
+      <!-- Settings Dropdown -->
+      <div class="relative">
+        <button class="bg-gray-800 text-white p-2 rounded-full focus:outline-none" id="settings-button">
+          <span class="material-icons">⚙️</span>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="settings-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border">
+          <ul>
+            <a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">Profile</a>
+            <a href="{% url 'change_password' %}" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">Change
+              Password</a>
+            <li>
+              <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                  Sign out
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="bg-white">
+    <div class="max-w-screen-2xl mx-auto px-6">
+      <div class="grid grid-cols-4 gap-2">
+        <div id="tab-teams" onclick="switchTab('teams')"
+          class="cursor-pointer flex items-center justify-center gap-2 py-3 border-b-2 border-gray-900 font-medium transition-colors">
+          <span>🏆</span><span>Teams</span>
+        </div>
+        <div id="tab-players" onclick="switchTab('players')"
+          class="cursor-pointer flex items-center justify-center gap-2 py-3 text-gray-600 hover:text-gray-900 transition-colors">
+          <span>👥</span><span>Players</span>
+        </div>
+        <div id="tab-schedule" onclick="switchTab('schedule')"
+          class="cursor-pointer flex items-center justify-center gap-2 py-3 text-gray-600 hover:text-gray-900 transition-colors">
+          <span>📅</span><span>Schedule</span>
+        </div>
+        <div id="tab-statistics" onclick="switchTab('statistics')"
+          class="cursor-pointer flex items-center justify-center gap-2 py-3 text-gray-600 hover:text-gray-900 transition-colors">
+          <span>📊</span><span>Statistics</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1 max-w-screen-2xl mx-auto px-6 py-8 w-full">
+
+    <!-- Teams View -->
+    <div id="view-teams" class="tab-content">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold">My Teams</h2>
+          <p class="text-gray-500">Manage your sports teams and rosters</p>
+        </div>
+
+        <button id="openCreateTeamModal" type="button"
+          class="inline-flex items-center gap-2 bg-gray-900 text-white px-5 py-2.5 rounded-xl hover:bg-black">
+          <span class="text-lg">＋</span><span>Create Team</span>
+        </button>
+      </div>
+
+      {% if messages %}
+      <ul class="mt-4 space-y-2">
+        {% for m in messages %}
+        <li class="text-sm rounded-md px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200">{{ m }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% if teams %}
+      <section class="mt-8">
+        <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {% for t in teams %}
+          <a href="{% url 'team_detail' t.id %}"
+            class="rounded-2xl border bg-white p-6 shadow-sm hover:shadow-md transition-shadow block">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.6">
+                <path d="M8 7V4h8v3" />
+                <path d="M7 7H4a3 3 0 0 0 3 5h.5" />
+                <path d="M17 7h3a3 3 0 0 1-3 5H16.5" />
+                <path d="M12 14v5" />
+                <path d="M8 22h8" />
+                <rect x="7" y="7" width="10" height="7" rx="2" />
+              </svg>
+              <h3 class="text-xl font-semibold">{{ t.name }}</h3>
+            </div>
+            <p class="mt-2 text-gray-600">
+              {{ t.sport|lower }}{% if t.season %} • {{ t.season }}{% endif %}
+            </p>
+            <div class="mt-4 flex items-center gap-6 text-sm text-gray-500">
+              <span class="inline-flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                {% with pcount=t.player_set.count %}{{ pcount }} player{{ pcount|pluralize }}{% endwith %}
+              </span>
+              <span class="inline-flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+                Created {{ t.created_at|date:"n/j/Y" }}
+              </span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </section>
+      {% else %}
+      <section class="mt-8 bg-white border rounded-2xl p-10 flex flex-col items-center text-center">
+        <div class="text-5xl">🏟️</div>
+        <h3 class="mt-3 text-xl font-semibold">No teams yet</h3>
+        <p class="mt-2 text-gray-600">Add a new sports team to manage players and schedules.</p>
+      </section>
+      {% endif %}
+    </div>
+
+    <!-- Players View -->
+    <div id="view-players" class="hidden tab-content">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-semibold">Team Players</h2>
+          <p class="text-gray-500">Manage Your Players</p>
+        </div>
+
+        <div>
+          <select id="playerTeamFilter" onchange="filterPlayers()"
+            class="h-10 pl-3 pr-8 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900">
+            <option value="all" selected>Show Team: All Teams</option>
+            {% for t in teams %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <label class="text-sm text-gray-600 mr-2">Filter:</label>
+          <select id="attendanceFilter" onchange="filterPlayers()"
+            class="h-9 pl-3 pr-6 rounded-xl border border-gray-200 bg-white text-sm">
+            <option value="all" selected>All attendance</option>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+            <option value="no_record">No record</option>
+          </select>
+          <div class="ml-4 flex items-center gap-3 text-sm">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span><span
+                class="text-gray-600">Present</span></div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span
+                class="text-gray-600">Absent</span></div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-gray-300"></span><span
+                class="text-gray-600">No record</span></div>
+          </div>
+        </div>
+      </div>
+
+      {% if all_players %}
+      <div class="bg-white rounded-2xl border overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jersey</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200" id="playersTableBody">
+              {% for player in all_players %}
+              <tr class="player-row hover:bg-gray-50 transition-colors" data-team-id="{{ player.team.id }}"
+                data-attendance="{% if player.latest_attendance %}{% if player.latest_attendance.present %}present{% else %}absent{% endif %}{% else %}none{% endif %}">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div
+                      class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+                      {{ player.first_name.0|default:player.name.0 }}{{ player.last_name.0|default:"" }}
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ player.first_name|default:player.name }} {{ player.last_name|default:"" }}
+                      </div>
+                      {% if player.date_of_birth %}
+                      <div class="text-sm text-gray-500">Age: {{ player.age }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  {{ player.team.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ player.position|default:"—" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  #{{ player.jersey_number|default:"—" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {{ player.attendance_ratio }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex items-center gap-4 justify-end">
+                    <a href="{% url 'team_detail' player.team.id %}"
+                      class="text-blue-600 hover:text-blue-900 font-medium">
+                      Manage in Team &rarr;
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <div id="noPlayersMessage" class="hidden px-6 py-12 text-center">
+            <div class="text-5xl mb-4">👥</div>
+            <h4 class="text-lg font-semibold text-gray-900">No players found</h4>
+            <p class="text-gray-600 mt-2">No players found for the selected team.</p>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <section class="mt-8 bg-white border rounded-2xl p-16 flex flex-col items-center text-center">
+        <div class="text-5xl text-gray-300 mb-4">👥</div>
+        <h3 class="text-xl font-semibold text-gray-900">No players yet</h3>
+        <p class="mt-2 text-gray-500">Start building your roster by adding players to your teams.</p>
+      </section>
+      {% endif %}
+    </div>
+
+    <!-- Schedule View -->
+    <div id="view-schedule" class="hidden tab-content">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-semibold">Team Schedule</h2>
+          <p class="text-gray-500">Manage your games and practice sessions</p>
+        </div>
+        <div class="flex gap-3 bg-gray-100 p-1 rounded-xl">
+          <button onclick="toggleScheduleView('list')" id="btn-list-view"
+            class="px-4 py-2 rounded-lg text-sm font-medium bg-white text-gray-900 shadow-sm transition-all">
+            List View
+          </button>
+          <button onclick="toggleScheduleView('calendar')" id="btn-calendar-view"
+            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">
+            Calendar View
+          </button>
+          <button id="openAddEventModal"
+            class="ml-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black font-medium transition-colors">
+            + Add Event
+          </button>
+        </div>
+      </div>
+
+      <div id="schedule-list-view">
+        {% if upcoming_events or past_events %}
+        <div class="space-y-8">
+          {% if upcoming_events %}
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span>📅</span> Upcoming Events
+            </h3>
+            <div class="grid gap-4">
+              {% for event in upcoming_events %}
+              <div onclick="openEventDetails('{{ event.id }}')"
+                class="group bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-5 hover:shadow-md transition-all hover:border-gray-300 cursor-pointer">
+                <div class="flex-shrink-0 w-20 h-20 rounded-xl flex flex-col items-center justify-center border
+                                    {% if event.event_type == 'Game' %} bg-blue-50 border-blue-100 text-blue-600
+                                    {% else %} bg-green-50 border-green-100 text-green-600 {% endif %}">
+                  <span class="text-xs font-bold uppercase tracking-wider">{{ event.date|date:"M" }}</span>
+                  <span class="text-2xl font-bold">{{ event.date|date:"d" }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-3 mb-1">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide
+                                              {% if event.event_type == 'Game' %} bg-blue-100 text-blue-700
+                                              {% else %} bg-green-100 text-green-700 {% endif %}">
+                      {{ event.event_type|upper }}
+                    </span>
+                  </div>
+                  <h4 class="text-lg font-bold text-gray-900 truncate">
+                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title
+                    }} {% endif %}
+                  </h4>
+                  <div class="flex items-center gap-4 mt-1 text-sm text-gray-500 font-medium">
+                    <span>{{ event.time|time:"g:i A" }}</span>
+                    <span class="truncate">• {{ event.location }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onclick="event.stopPropagation(); openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg
+                      xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg></button>
+                  <button onclick="event.stopPropagation(); openDeleteEventModal('{{ event.id }}')"
+                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg
+                      xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg></button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if past_events %}
+          <div>
+            <h3 class="text-lg font-bold text-gray-400 mb-4 flex items-center gap-2"><span>🕰️</span> Past Events</h3>
+            <div class="grid gap-4 opacity-70 hover:opacity-100 transition-opacity">
+              {% for event in past_events %}
+              <div onclick="openEventDetails('{{ event.id }}')"
+                class="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex items-center gap-5 cursor-pointer">
+                <div
+                  class="flex-shrink-0 w-20 h-20 rounded-xl flex flex-col items-center justify-center border bg-white border-gray-200 text-gray-500">
+                  <span class="text-xs font-bold uppercase tracking-wider">{{ event.date|date:"M" }}</span>
+                  <span class="text-2xl font-bold">{{ event.date|date:"d" }}</span>
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-lg font-bold text-gray-700">
+                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title
+                    }} {% endif %}
+                  </h4>
+                  <p class="text-sm text-gray-500 mt-1">{{ event.location }} • {{ event.time|time:"g:i A" }}</p>
+                </div>
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onclick="event.stopPropagation(); openEditEventModal('{{ event.id }}', '{{ event.title|escapejs }}', '{{ event.event_type }}', '{{ event.date|date:'Y-m-d' }}', '{{ event.time|time:'H:i' }}', '{{ event.location|escapejs }}', '{{ event.opponent|default:''|escapejs }}', '{{ event.notes|default:''|escapejs }}', '{{ event.team.id }}')"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><svg
+                      xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg></button>
+                  <button onclick="event.stopPropagation(); openDeleteEventModal('{{ event.id }}')"
+                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg
+                      xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg></button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <section class="mt-8 bg-white border rounded-2xl p-16 flex flex-col items-center text-center">
+          <div class="text-5xl text-gray-300 mb-4">📅</div>
+          <h3 class="text-xl font-semibold text-gray-900">No event Scheduled</h3>
+          <p class="mt-2 text-gray-500">Schedule your first game or practice session to see it here.</p>
+        </section>
+        {% endif %}
+      </div>
+
+      <!-- Calendar View Container -->
+      <div id="schedule-calendar-view" class="hidden bg-white p-6 rounded-2xl border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+          <h3 id="calMonthYear" class="text-xl font-bold text-gray-900"></h3>
+          <div class="flex gap-2">
+            <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button onclick="changeMonth(0)"
+              class="px-3 py-1 rounded-lg text-sm font-medium hover:bg-gray-100 text-gray-600 transition-colors">Today</button>
+            <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-200">
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Sun</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Mon</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Tue</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Wed</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Thu</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Fri</div>
+          <div class="bg-gray-50 py-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Sat</div>
+        </div>
+
+        <div id="calendarGrid"
+          class="grid grid-cols-7 gap-px bg-gray-200 mt-px border-l border-r border-b border-gray-200 rounded-b-lg">
+          <!-- JS Generation -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics View -->
+    <div id="view-statistics" class="hidden tab-content">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Player Statistics Each Game</h2>
+        <p class="text-gray-500">Manage your Statistics</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border p-6 shadow-sm">
+
+        <!-- Row 1: Team, Game, Opponent -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <!-- Select Team -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Team</label>
+            <select id="statsTeamSelect"
+              class="w-full h-11 px-4 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow">
+              <option value="" disabled selected>-- Select Team --</option>
+              {% for t in teams %}
+              <option value="{{ t.id }}" data-sport="{{ t.sport }}">{{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Select Game -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Game Title</label>
+            <select id="statsGameSelect" disabled
+              class="w-full h-11 px-4 rounded-xl border border-gray-300 bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow">
+              <option value="">Game title (optional)</option>
+            </select>
+          </div>
+
+          <!-- Select Opponent -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Opponent</label>
+            <input type="text" id="statsOpponentInput" disabled
+              class="w-full h-11 px-4 rounded-xl border border-gray-300 bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow"
+              placeholder="Opponent name">
+          </div>
+        </div>
+
+        <!-- Row 2: Date, Load Link, Win/Loss Buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-6">
+
+          <div class="w-full md:w-1/3">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+            <div class="relative">
+              <input type="date" id="statsDateInput"
+                class="w-full h-11 px-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 transition-shadow text-gray-600">
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center flex-1">
+            <button id="btnLoadPlayers"
+              class="text-blue-500 hover:text-blue-700 font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed">
+              Load Players
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button id="btnWin"
+              class="h-11 px-6 rounded-lg font-medium text-white bg-gray-300 hover:bg-green-500 transition-colors focus:outline-none">
+              Win
+            </button>
+            <button id="btnLoss"
+              class="h-11 px-6 rounded-lg font-medium text-white bg-gray-300 hover:bg-red-500 transition-colors focus:outline-none">
+              Loss
+            </button>
+            <input type="hidden" id="winLossState" value="">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dynamic Stats Box -->
+      <div id="statsContainer" class="hidden mt-8">
+        <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+          <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+            <h3 class="font-semibold text-lg" id="statsHeaderTitle">Match Statistics</h3>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="bg-gray-100" id="statsTableHead"></thead>
+              <tbody id="statsTableBody" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+
+          <div class="p-6 border-t bg-gray-50 flex justify-end">
+            <button id="btnSaveStats"
+              class="h-11 px-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors active:scale-95">
+              Save Game Stats
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODALS HTML -->
+
+  <!-- Create Team Modal -->
+  <div id="createTeamModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform transition-all scale-100">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-bold text-gray-900">Create New Team</h3>
+        <button id="closeCreateTeamModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Team Name</label>
+            <input type="text" name="team_name" required
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all placeholder-gray-400"
+              placeholder="e.g. Tigers">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Location / Home Venue</label>
+            <input type="text" name="location"
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all placeholder-gray-400"
+              placeholder="e.g. City Stadium">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sport</label>
+            <select name="sport" required
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+              <option value="" disabled selected>Select a Sport</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Soccer">Soccer</option>
+              <option value="Football">Football</option>
+              <option value="Baseball">Baseball</option>
+              <option value="Volleyball">Volleyball</option>
+              <option value="Track & Field">Track & Field</option>
+              <option value="Tennis">Tennis</option>
+              <option value="Swimming">Swimming</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Max Players</label>
+              <input type="number" name="max_players_allowed" value="15"
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select name="status"
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6">
+          <button type="submit"
+            class="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold hover:bg-black transition-colors shadow-lg shadow-gray-200">Create
+            Team</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Event Modal -->
+  <div id="addEventModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-bold text-gray-900">Schedule New Event</h3>
+        <button id="closeAddEventModal" class="text-gray-400 hover:text-gray-600"><svg
+            xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg></button>
+      </div>
+      <form action="{% url 'add_event' %}" method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Team</label>
+            <select name="team_id" required
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 outline-none">
+              {% for t in teams %}
+              <option value="{{ t.id }}">{{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" name="title" required
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none" placeholder="Event Title">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select name="event_type" class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+                <option value="Game">Game</option>
+                <option value="Practice">Practice</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input type="date" name="date" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+              <input type="time" name="time" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input type="text" name="location" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Opponent (if Game)</label>
+            <input type="text" name="opponent" class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea name="notes" rows="2"
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none"></textarea>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button type="button" id="cancelAddEvent"
+            class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-black">Save
+            Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Event Modal -->
+  <div id="editEventModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-xl font-bold text-gray-900">Edit Event</h3>
+        <button id="closeEditEventModal" class="text-gray-400 hover:text-gray-600"><svg
+            xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg></button>
+      </div>
+      <form id="editEventForm" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" id="edit_event_id" name="event_id">
+        <input type="hidden" id="edit_team_id" name="team_id">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" id="edit_title" name="title" required
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select id="edit_event_type" name="event_type"
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+                <option value="Game">Game</option>
+                <option value="Practice">Practice</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input type="date" id="edit_date" name="date" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+              <input type="time" id="edit_time" name="time" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input type="text" id="edit_location" name="location" required
+                class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Opponent (if Game)</label>
+            <input type="text" id="edit_opponent" name="opponent"
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="edit_notes" name="notes" rows="2"
+              class="w-full px-4 py-2 rounded-xl border border-gray-300 outline-none"></textarea>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button type="submit"
+            class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition-colors">Update
+            Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Event Modal -->
+  <div id="deleteEventModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+      <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Event?</h3>
+      <p class="text-gray-500 mb-6">Are you sure you want to delete this event? This action cannot be undone.</p>
+      <form id="deleteEventForm" action="" method="POST" class="flex gap-3">
+        {% csrf_token %}
+        <button type="button" id="closeDeleteEventModal"
+          class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium transition-colors">Cancel</button>
+        <button type="submit"
+          class="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium transition-colors">Delete</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Event Details Modal (Tabbed) -->
+  <div id="eventDetailsModal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all scale-100">
+
+      <!-- Header -->
+      <div class="px-6 py-4 flex justify-between items-start border-b border-gray-100">
+        <div>
+          <h3 id="detailTitle" class="text-xl font-bold text-gray-900">Event Title</h3>
+          <p id="detailDateSub" class="text-sm text-gray-500">Date</p>
+        </div>
+        <button id="closeDetailModal" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200">
+        <button onclick="switchDetailTab('details')" id="tab-details"
+          class="flex-1 py-3 text-sm font-semibold text-gray-900 border-b-2 border-black focus:outline-none transition-colors">
+          Details
+        </button>
+        <button onclick="switchDetailTab('attendance')" id="tab-attendance"
+          class="flex-1 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors">
+          Mark Attendance
+        </button>
+        <button onclick="switchDetailTab('stats')" id="tab-stats"
+          class="flex-1 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors">
+          Stats
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 h-96 overflow-y-auto custom-scrollbar">
+
+        <!-- Details Tab -->
+        <div id="content-details" class="space-y-4">
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Event Type:</span>
+            <span id="detType" class="col-span-2 text-sm text-gray-600 font-medium"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Date:</span>
+            <span id="detDate" class="col-span-2 text-sm text-gray-600"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Time:</span>
+            <span id="detTime" class="col-span-2 text-sm text-gray-600"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Location:</span>
+            <span id="detLocation" class="col-span-2 text-sm text-gray-600"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Opponent:</span>
+            <span id="detOpponent" class="col-span-2 text-sm text-gray-600"></span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <span class="text-sm font-semibold text-gray-900 text-right">Notes:</span>
+            <p id="detNotes" class="col-span-2 text-sm text-gray-600 italic"></p>
+          </div>
+        </div>
+
+        <!-- Attendance Tab -->
+        <div id="content-attendance" class="hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h4 class="text-sm font-bold text-gray-700">Team Roster</h4>
+            <span class="text-xs text-gray-500">Check to mark present</span>
+          </div>
+          <form id="attendanceForm">
+            <input type="hidden" id="attEventId">
+            <div id="attendanceList" class="space-y-2">
+              <!-- JS Populated -->
+            </div>
+            <div class="mt-6">
+              <button type="submit"
+                class="w-full bg-gray-900 text-white py-2 rounded-xl font-semibold hover:bg-black transition-colors">
+                Save Attendance
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="content-stats" class="hidden flex flex-col items-center justify-center h-full text-center">
+          <div class="p-4 bg-gray-50 rounded-xl w-full">
+            <p class="text-gray-600 mb-4">Go to Statistics tab to manage detailed game stats.</p>
+            <button onclick="closeDetailModalAndGoToStats()"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+              Go to Statistics
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+        <button id="btn-view-stats"
+          class="hidden px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 font-medium transition-colors">
+          View Stats
+        </button>
+        <button id="btn-edit-event"
+          class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors">
+          Edit
+        </button>
+        <button id="btn-delete-event"
+          class="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div id="successModal"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center transform transition-all scale-100">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Success!</h3>
+      <p id="successMessage" class="text-gray-500 mb-6">Action completed successfully.</p>
+      <button id="closeSuccessModal"
+        class="w-full py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-black transition-colors">
+        OK
+      </button>
+    </div>
+  </div>
+
+  {{ events_json|json_script:"events-data" }}
+  {{ players_by_team|json_script:"players-data" }}
+  <script>
+    // Tab Switching Logic
+    console.log("Coach Dashboard Script Loaded - VERSION FIX_APPLIED"); // Sentinel
+
+    // Settings Dropdown Logic (Global)
+    document.addEventListener('DOMContentLoaded', () => {
+      const settingsBtn = document.getElementById('settings-button');
+      const settingsDropdown = document.getElementById('settings-dropdown');
+      if (settingsBtn && settingsDropdown) {
+        settingsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          settingsDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+            settingsDropdown.classList.add('hidden');
+          }
+        });
+      }
+    });
+    function switchTab(tabName) {
+      ['teams', 'players', 'schedule', 'statistics'].forEach(t => {
+        const el = document.getElementById('view-' + t);
+        if (el) el.classList.add('hidden');
+        const btn = document.getElementById('tab-' + t);
+        if (btn) {
+          btn.classList.remove('border-b-2', 'border-gray-900', 'font-medium', 'text-gray-900');
+          btn.classList.add('text-gray-600');
+        }
+      });
+      const selectedView = document.getElementById('view-' + tabName);
+      if (selectedView) selectedView.classList.remove('hidden');
+      const selectedBtn = document.getElementById('tab-' + tabName);
+      if (selectedBtn) {
+        selectedBtn.classList.remove('text-gray-600');
+        selectedBtn.classList.add('border-b-2', 'border-gray-900', 'font-medium', 'text-gray-900');
+      }
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tabName);
+      window.history.pushState({}, '', url);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || 'teams';
+      switchTab(tab);
+    });
+
+    // --- SCHEDULE & CALENDAR LOGIC ---
+
+    // Toggle Schedule View
+    function toggleScheduleView(view) {
+      const listView = document.getElementById('schedule-list-view');
+      const calView = document.getElementById('schedule-calendar-view');
+      const btnList = document.getElementById('btn-list-view');
+      const btnCal = document.getElementById('btn-calendar-view');
+
+      if (view === 'list') {
+        btnList.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+        btnList.classList.remove('text-gray-500');
+        btnCal.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+        btnCal.classList.add('text-gray-500');
+
+        listView.classList.remove('hidden');
+        calView.classList.add('hidden');
+      } else {
+        btnCal.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+        btnCal.classList.remove('text-gray-500');
+        btnList.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+        btnList.classList.add('text-gray-500');
+
+        listView.classList.add('hidden');
+        calView.classList.remove('hidden');
+        renderCalendar(); // Re-render when shown
+      }
+    }
+
+    // Calendar Vars
+    let calendarDate = new Date();
+    // ERROR PROOFING: Use if/else to avoid "default" filter issues and Ensure valid JS syntax
+    const calendarEvents = JSON.parse(document.getElementById('events-data').textContent);
+
+    function changeMonth(delta) {
+      if (delta === 0) {
+        calendarDate = new Date();
+      } else {
+        calendarDate.setMonth(calendarDate.getMonth() + delta);
+      }
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const title = document.getElementById('calMonthYear');
+      if (!grid || !title) return;
+
+      grid.innerHTML = '';
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+
+      // Update Title
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      // FIX: Encased in backticks
+      title.textContent = `${monthNames[month]} ${year}`;
+
+      // Calculate days
+      const firstDay = new Date(year, month, 1).getDay(); // 0 = Sun
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+
+      // Previous Month Fillers
+      for (let i = firstDay; i > 0; i--) {
+        const d = document.createElement('div');
+        d.className = "bg-gray-50 h-24 p-2 text-gray-300 pointer-events-none"; // Inactive
+        d.textContent = prevMonthDays - i + 1;
+        grid.appendChild(d);
+      }
+
+      // Current Month Days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = "bg-white h-24 p-2 relative hover:bg-gray-50 transition-colors group overflow-hidden";
+        // Date Number
+        const dateNum = document.createElement('div');
+        dateNum.className = "text-sm font-medium text-gray-700 mb-1";
+        dateNum.textContent = day;
+
+        // Highlight Today
+        const today = new Date();
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+          dateNum.className = "text-sm font-bold text-white bg-blue-600 w-6 h-6 rounded-full flex items-center justify-center mb-1";
+        }
+        cell.appendChild(dateNum);
+
+        // Find Events for this day
+        // Check date string YYYY-MM-DD
+        const monthStr = (month + 1).toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const dateString = `${year}-${monthStr}-${dayStr}`;
+        const dayEvents = calendarEvents.filter(e => e.date === dateString);
+
+        dayEvents.forEach(ev => {
+          const badge = document.createElement('div');
+          // FIX: Backticks
+          badge.className = `text-[10px] px-1.5 py-0.5 rounded truncate cursor-pointer mb-1 shadow-sm opacity-90 hover:opacity-100 ${ev.type === 'Game' ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-green-100 text-green-800 border border-green-200'}`;
+          // FIX: Backticks
+          badge.textContent = ev.type === 'Game' ? `vs ${ev.opponent || 'TBD'}` : ev.title;
+          // FIX: Backticks
+          badge.title = `${ev.time} - ${ev.location}`;
+
+          // Click to open details
+          badge.onclick = (e) => {
+            e.stopPropagation();
+            openEventDetails(ev.id); // Reuse existing modal
+          };
+          cell.appendChild(badge);
+        });
+
+        grid.appendChild(cell);
+      }
+
+      // Next Month Fillers
+      const totalCells = firstDay + daysInMonth;
+      const nextMonthCells = (7 - (totalCells % 7)) % 7;
+      for (let i = 1; i <= nextMonthCells; i++) {
+        const d = document.createElement('div');
+        d.className = "bg-gray-50 h-24 p-2 text-gray-300 pointer-events-none"; d.textContent = i;
+        grid.appendChild(d);
+      }
+    }
+
+    // --- STATISTICS LOGIC ---
+    const SPORTS_CONFIG = {
+      'Basketball': [
+        { key: 'two_pt_made', label: '2PT Made' },
+        { key: 'three_pt_made', label: '3PT Made' },
+        { key: 'ft_made', label: 'FT Made' },
+        { key: 'rebounds', label: 'REB' },
+        { key: 'assists', label: 'AST' },
+        { key: 'steals', label: 'STL' },
+        { key: 'blocks', label: 'BLK' },
+        { key: 'turnovers', label: 'TO' }
+      ],
+      'Soccer': [
+        { key: 'goals', label: 'Goals' },
+        { key: 'assists', label: 'Assists' },
+        { key: 'shots_on_target', label: 'SOT' },
+        { key: 'saves', label: 'Saves' },
+        { key: 'tackles', label: 'Tackles' },
+        { key: 'fouls', label: 'Fouls' },
+        { key: 'yellow_cards', label: 'Yellow' },
+        { key: 'red_cards', label: 'Red' }
+      ],
+      'Football': [
+        { key: 'touchdowns', label: 'TDs' },
+        { key: 'passing_yards', label: 'Pass Yds' },
+        { key: 'rushing_yards', label: 'Rush Yds' },
+        { key: 'receptions', label: 'Rec' },
+        { key: 'sacks', label: 'Sacks' },
+        { key: 'interceptions', label: 'INT' }
+      ],
+      'Baseball': [
+        { key: 'at_bats', label: 'AB' },
+        { key: 'hits', label: 'Hits' },
+        { key: 'runs', label: 'Runs' },
+        { key: 'home_runs', label: 'HR' },
+        { key: 'rbis', label: 'RBI' },
+        { key: 'strikeouts', label: 'K' }
+      ],
+      'Volleyball': [
+        { key: 'kills', label: 'Kills' },
+        { key: 'aces', label: 'Aces' },
+        { key: 'digs', label: 'Digs' },
+        { key: 'blocks', label: 'Blocks' },
+        { key: 'assists', label: 'Assists' }
+      ]
+    };
+
+    const DEFAULT_STATS = [{ key: 'goals', label: 'Score/Points' }, { key: 'assists', label: 'Assists' }];
+
+    // FIX: Using if pattern (Fixed Syntax Error)
+    const playersByTeam = JSON.parse(document.getElementById('players-data').textContent);
+    let currentGames = [];
+
+    const statsTeamSelect = document.getElementById('statsTeamSelect');
+    const statsGameSelect = document.getElementById('statsGameSelect');
+    const statsOpponentInput = document.getElementById('statsOpponentInput');
+    const btnLoadPlayers = document.getElementById('btnLoadPlayers');
+    const statsContainer = document.getElementById('statsContainer');
+
+    const btnWin = document.getElementById('btnWin');
+    const btnLoss = document.getElementById('btnLoss');
+    const winLossState = document.getElementById('winLossState');
+
+    function setWinLoss(isWin) {
+      if (isWin === true) {
+        btnWin.classList.remove('bg-gray-300', 'text-gray-500');
+        btnWin.classList.add('bg-green-500', 'text-white');
+        btnLoss.classList.add('bg-gray-300');
+        btnLoss.classList.remove('bg-red-500', 'text-white');
+        winLossState.value = 'win';
+      } else if (isWin === false) {
+        btnLoss.classList.remove('bg-gray-300', 'text-gray-500');
+        btnLoss.classList.add('bg-red-500', 'text-white');
+        btnWin.classList.add('bg-gray-300');
+        btnWin.classList.remove('bg-green-500', 'text-white');
+        winLossState.value = 'loss';
+      } else {
+        btnWin.classList.add('bg-gray-300');
+        btnWin.classList.remove('bg-green-500', 'text-white');
+        btnLoss.classList.add('bg-gray-300');
+        btnLoss.classList.remove('bg-red-500', 'text-white');
+        winLossState.value = '';
+      }
+    }
+
+    if (btnWin) btnWin.addEventListener('click', () => setWinLoss(true));
+    if (btnLoss) btnLoss.addEventListener('click', () => setWinLoss(false));
+
+    statsTeamSelect.addEventListener('change', async (e) => {
+      const teamId = e.target.value;
+      statsGameSelect.innerHTML = '<option value="">Loading...</option>';
+      statsGameSelect.disabled = true;
+      if (statsOpponentInput) {
+        statsOpponentInput.value = '';
+        statsOpponentInput.disabled = true;
+      }
+      statsContainer.classList.add('hidden');
+
+      try {
+        const resp = await fetch(`/coach/get_games_by_team/${teamId}/`); // FIX: Backticks
+        const data = await resp.json();
+        currentGames = data.games;
+
+        statsGameSelect.innerHTML = '<option value="" selected>Game title (optional)</option>';
+        if (currentGames.length > 0) {
+          currentGames.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            // FIX: Backticks
+            opt.textContent = `${g.title || 'Untitled'} (${g.date})`;
+            opt.dataset.opponent = g.opponent;
+            statsGameSelect.appendChild(opt);
+          });
+        } else {
+          const opt = document.createElement('option');
+          opt.disabled = true;
+          opt.textContent = "No games found";
+          statsGameSelect.appendChild(opt);
+        }
+        statsGameSelect.disabled = false;
+        if (statsOpponentInput) statsOpponentInput.disabled = false;
+      } catch (err) {
+        console.error(err);
+        alert('Error loading games');
+      }
+    });
+
+    statsGameSelect.addEventListener('change', (e) => {
+      const gameId = e.target.value;
+      if (!gameId) {
+        if (statsOpponentInput) statsOpponentInput.value = '';
+        return;
+      }
+      const game = currentGames.find(g => g.id == gameId);
+      if (game) {
+        if (statsOpponentInput) {
+          statsOpponentInput.value = game.opponent || '';
+        }
+        if (game.date) {
+          document.getElementById('statsDateInput').value = game.date;
+        }
+      }
+    });
+
+    btnLoadPlayers.addEventListener('click', async () => {
+      const teamId = statsTeamSelect.value;
+      if (!teamId) return;
+      const sport = statsTeamSelect.options[statsTeamSelect.selectedIndex].dataset.sport;
+      const gameId = statsGameSelect.value;
+      const teamPlayers = playersByTeam[teamId] || [];
+      const config = SPORTS_CONFIG[sport] || DEFAULT_STATS;
+
+      const thead = document.getElementById('statsTableHead');
+      // FIX: Backticks
+      thead.innerHTML = `<tr><th class="px-4 py-3 text-xs font-bold text-gray-500 uppercase">Player</th>${config.map(f => `<th class="px-2 py-3 text-xs font-bold text-gray-500 uppercase text-center">${f.label}</th>`).join('')}</tr>`;
+
+      const tbody = document.getElementById('statsTableBody');
+      tbody.innerHTML = '';
+
+      let existingStats = {};
+      let gameInfo = null;
+
+      if (gameId) {
+        try {
+          // FIX: Backticks
+          const resp = await fetch(`/coach/event/${gameId}/stats/`);
+          const data = await resp.json();
+          if (data.stats) existingStats = data.stats;
+          if (data.game) gameInfo = data.game;
+        } catch (e) { console.error("Could not load stats", e); }
+      }
+
+      if (gameInfo && gameInfo.is_win !== undefined) {
+        setWinLoss(gameInfo.is_win);
+      } else {
+        setWinLoss(null);
+      }
+
+      teamPlayers.forEach(p => {
+        const pStats = existingStats[p.id] || {};
+        let inputsHtml = config.map(field => {
+          const val = pStats[field.key] || 0;
+          // FIX: Backticks
+          return `<td class="p-2 text-center"><input type="number" min="0" data-player="${p.id}" data-stat="${field.key}" value="${val}" class="w-16 h-9 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"></td>`;
+        }).join('');
+        // FIX: Backticks
+        const row = `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3"><div class="font-medium text-gray-900">${p.name}</div><div class="text-xs text-gray-500">#${p.jersey}</div></td>${inputsHtml}</tr>`;
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+
+      statsContainer.classList.remove('hidden');
+      // FIX: Backticks
+      document.getElementById('statsHeaderTitle').textContent = `Stats for ${sport}`;
+    });
+
+    document.getElementById('btnSaveStats').addEventListener('click', async () => {
+      const teamId = statsTeamSelect.value;
+      let eventId = statsGameSelect.value;
+      const opponent = statsOpponentInput ? statsOpponentInput.value : '';
+      let isWin = null;
+      if (winLossState.value === 'win') isWin = true;
+      if (winLossState.value === 'loss') isWin = false;
+      const dateVal = document.getElementById('statsDateInput').value;
+
+      if (!teamId) {
+        alert("Please select a team.");
+        return;
+      }
+
+      const statsPayload = {};
+      const inputs = document.querySelectorAll('#statsTableBody input');
+      inputs.forEach(inp => {
+        const pid = inp.dataset.player;
+        const key = inp.dataset.stat;
+        const val = parseInt(inp.value) || 0;
+        if (!statsPayload[pid]) statsPayload[pid] = {};
+        statsPayload[pid][key] = val;
+      });
+
+      const payload = {
+        game: {
+          team_id: teamId,
+          event_id: eventId,
+          date: dateVal || new Date().toISOString().split('T')[0],
+          opponent: opponent,
+          is_win: isWin
+        },
+        stats: statsPayload
+      };
+
+      try {
+        const resp = await fetch('{% url "save_game_stats" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // FIX: Robust CSRF
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+        if (res.success) {
+          showSuccessModal('Stats saved successfully!');
+        } else {
+          alert('Error saving stats: ' + res.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error saving stats.');
+      }
+    });
+
+    // 1. Create Team Modal
+    const createTeamModal = document.getElementById('createTeamModal');
+    const openCreateTeamBtn = document.getElementById('openCreateTeamModal');
+    const closeCreateTeamBtn = document.getElementById('closeCreateTeamModal');
+
+    if (openCreateTeamBtn) {
+      openCreateTeamBtn.addEventListener('click', () => {
+        createTeamModal.classList.remove('hidden');
+      });
+    }
+    if (closeCreateTeamBtn) {
+      closeCreateTeamBtn.addEventListener('click', () => {
+        createTeamModal.classList.add('hidden');
+      });
+    }
+
+    // 2. Add Event Modal
+    const addEventModal = document.getElementById('addEventModal');
+    const openAddEventBtn = document.getElementById('openAddEventModal');
+    const closeAddEventBtn = document.getElementById('closeAddEventModal');
+
+    if (openAddEventBtn) {
+      openAddEventBtn.addEventListener('click', () => {
+        addEventModal.classList.remove('hidden');
+      });
+    }
+    if (closeAddEventBtn) {
+      closeAddEventBtn.addEventListener('click', () => {
+        addEventModal.classList.add('hidden');
+      });
+    }
+
+    // 2.5 Event Details Modal Logic
+    const eventDetailsModal = document.getElementById('eventDetailsModal');
+    function openEventDetails(eventId) {
+      console.log("DEBUG: openEventDetails called");
+      // Find event
+      const allEvents = calendarEvents;
+      const evt = allEvents.find(e => e.id == eventId);
+      if (!evt) return;
+
+      // Update Header
+      const titleEl = document.getElementById('detailTitle');
+      if (titleEl) titleEl.textContent = evt.title;
+
+      const dateSubEl = document.getElementById('detailDateSub');
+      if (dateSubEl) dateSubEl.textContent = `${evt.date} • ${evt.time}`;
+
+      // Update Detail Tab Content
+      const domMap = {
+        'detDate': evt.date,
+        'detTime': evt.time,
+        'detLocation': evt.location || 'No location',
+        'detOpponent': evt.opponent || '-',
+        'detNotes': evt.notes || 'None'
+      };
+
+      for (const [key, val] of Object.entries(domMap)) {
+        const el = document.getElementById(key);
+        if (el) el.textContent = val;
+      }
+
+      const typeBadge = document.getElementById('detType');
+      if (typeBadge) {
+        typeBadge.textContent = evt.type;
+        if (evt.type === 'Game') {
+          typeBadge.className = "text-sm font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded";
+        } else {
+          typeBadge.className = "text-sm font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded";
+        }
+      }
+
+      // Configure Actions
+      const btnEdit = document.getElementById('btn-edit-event');
+      const btnDelete = document.getElementById('btn-delete-event');
+      const btnStats = document.getElementById('btn-view-stats');
+
+      if (btnEdit) {
+        btnEdit.onclick = function () {
+          eventDetailsModal.classList.add('hidden');
+          openEditEventModal(evt.id);
+        };
+      }
+
+      if (btnDelete) {
+        btnDelete.onclick = function () {
+          eventDetailsModal.classList.add('hidden');
+          openDeleteEventModal(evt.id);
+        };
+      }
+
+      // If it's a game, show stats button which switches tab
+      if (btnStats) {
+        if (evt.type === 'Game') {
+          btnStats.classList.remove('hidden');
+          btnStats.onclick = function () {
+            const tId = (evt.team && evt.team.id) ? evt.team.id : evt.team_id;
+            window.closeDetailModalAndGoToStats(tId, evt.id);
+          };
+        } else {
+          btnStats.classList.add('hidden');
+        }
+      }
+
+      eventDetailsModal.classList.remove('hidden');
+      // Load Attendance Async
+      loadAttendance(evt.id);
+
+      // Default detail tab
+      switchDetailTab('details');
+    }
+
+    async function loadAttendance(eventId) {
+      const listEl = document.getElementById('attendanceList');
+      const attEventId = document.getElementById('attEventId');
+      if (attEventId) attEventId.value = eventId;
+      if (!listEl) return;
+
+      listEl.innerHTML = '<div class="text-center py-4 text-gray-500">Loading players...</div>';
+
+      try {
+        const resp = await fetch(`/coach/event/${eventId}/attendance/`);
+        if (!resp.ok) throw new Error("Failed to load");
+        const data = await resp.json();
+
+        listEl.innerHTML = '';
+        if (data.players && data.players.length > 0) {
+          data.players.forEach(p => {
+            const isChecked = p.present ? 'checked' : '';
+
+            const row = `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-xs text-gray-600">
+                      ${p.jersey_number || '#'}
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900">${p.name}</p>
+                    </div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="attendance" value="${p.id}" ${isChecked} class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+                  </label>
+                </div>
+                `;
+            listEl.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          listEl.innerHTML = '<p class="text-sm text-gray-500 italic p-3">No players found.</p>';
+        }
+      } catch (e) {
+        console.error(e);
+        listEl.innerHTML = '<p class="text-red-500 p-3">Error loading attendance.</p>';
+      }
+    }
+
+    // 2.6 Success Modal
+    const successModal = document.getElementById('successModal');
+    function showSuccessModal(msg) {
+      if (successModal) {
+        const msgEl = document.getElementById('successMessage');
+        if (msgEl) msgEl.textContent = msg;
+        successModal.classList.remove('hidden');
+      }
+    }
+
+    const closeSuccessBtn = document.getElementById('closeSuccessModal');
+    if (closeSuccessBtn) {
+      closeSuccessBtn.addEventListener('click', () => {
+        successModal.classList.add('hidden');
+      });
+    }
+
+    const attForm = document.getElementById('attendanceForm');
+    if (attForm) {
+      attForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const eventId = document.getElementById('attEventId').value;
+        const checkboxes = attForm.querySelectorAll('input[name="attendance"]');
+        const attendanceMap = {};
+        checkboxes.forEach(cb => {
+          attendanceMap[cb.value] = cb.checked;
+        });
+
+        try {
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const resp = await fetch(`/coach/event/${eventId}/attendance/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ attendance: attendanceMap })
+          });
+          if (resp.ok) {
+            showSuccessModal("Attendance saved successfully!");
+          } else {
+            alert("Failed to save.");
+          }
+        } catch (e) {
+          console.error(e);
+          alert("Error saving.");
+        }
+      });
+    }
+
+    function switchDetailTab(tabName) {
+      // Hide all contents
+      const details = document.getElementById('content-details');
+      const attendance = document.getElementById('content-attendance');
+      const stats = document.getElementById('content-stats');
+
+
+
+      if (details) details.classList.add('hidden');
+      if (attendance) attendance.classList.add('hidden');
+      if (stats) stats.classList.add('hidden');
+
+      // Reset all tabs
+      ['details', 'attendance', 'stats'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (btn) {
+          btn.classList.remove('border-b-2', 'border-black', 'text-gray-900', 'font-semibold');
+          btn.classList.add('text-gray-500', 'font-medium');
+        }
+      });
+
+      // Show selected content
+      const content = document.getElementById('content-' + tabName);
+      if (content) content.classList.remove('hidden');
+
+      // Highlight selected tab
+      const selectedBtn = document.getElementById('tab-' + tabName);
+      if (selectedBtn) {
+        selectedBtn.classList.remove('text-gray-500', 'font-medium');
+        selectedBtn.classList.add('border-b-2', 'border-black', 'text-gray-900', 'font-semibold');
+      }
+    }
+
+    // Helper to jump to stats
+    window.closeDetailModalAndGoToStats = function (teamId, gameId) {
+      eventDetailsModal.classList.add('hidden');
+      switchTab('statistics');
+      // Pre-select team and game
+      if (statsTeamSelect) {
+        statsTeamSelect.value = teamId;
+        // Trigger change manual?
+        statsTeamSelect.dispatchEvent(new Event('change'));
+        // Wait for games to load? hacky timeout
+        setTimeout(() => {
+          if (statsGameSelect) {
+            statsGameSelect.value = gameId;
+            statsGameSelect.dispatchEvent(new Event('change'));
+          }
+        }, 800);
+      }
+    }
+
+    const closeDetailModalBtn = document.getElementById('closeDetailModal');
+    if (closeDetailModalBtn) {
+      closeDetailModalBtn.onclick = () => {
+        eventDetailsModal.classList.add('hidden');
+      };
+    }
+
+
+    // 3. Edit Event Modal
+    const editEventModal = document.getElementById('editEventModal');
+    const closeEditEventBtn = document.getElementById('closeEditEventModal');
+    const editEventForm = document.getElementById('editEventForm');
+
+    function openEditEventModal(id) {
+      const evt = calendarEvents.find(e => e.id == id);
+      if (!evt) return;
+
+      document.getElementById('edit_title').value = evt.title;
+      document.getElementById('edit_date').value = evt.date;
+      document.getElementById('edit_time').value = evt.time;
+      // edit_type select
+      document.getElementById('edit_type').value = evt.type;
+      document.getElementById('edit_location').value = evt.location || '';
+      document.getElementById('edit_opponent').value = evt.opponent || '';
+      const notes = evt.notes === 'None' ? '' : evt.notes;
+      document.getElementById('edit_notes').value = notes || '';
+      document.getElementById('edit_team_id').value = evt.team_id;
+
+      // Update Form Action
+      // FIX: Backticks
+      editEventForm.action = `/coach/event/${id}/edit/`;
+
+      editEventModal.classList.remove('hidden');
+    }
+
+    if (closeEditEventBtn) {
+      closeEditEventBtn.addEventListener('click', () => {
+        editEventModal.classList.add('hidden');
+      });
+    }
+
+    // 4. Delete Event Modal
+    const deleteEventModal = document.getElementById('deleteEventModal');
+    const closeDeleteEventBtn = document.getElementById('closeDeleteEventModal');
+    const deleteEventForm = document.getElementById('deleteEventForm');
+
+    function openDeleteEventModal(id) {
+      // FIX: Backticks
+      deleteEventForm.action = `/coach/event/${id}/delete/`;
+      deleteEventModal.classList.remove('hidden');
+    }
+
+    if (closeDeleteEventBtn) {
+      closeDeleteEventBtn.addEventListener('click', () => {
+        deleteEventModal.classList.add('hidden');
+      });
+    }
+
+    // Close modals on outside click
+    window.addEventListener('click', (e) => {
+      if (e.target === createTeamModal) createTeamModal.classList.add('hidden');
+      if (e.target === addEventModal) addEventModal.classList.add('hidden');
+      if (e.target === editEventModal) editEventModal.classList.add('hidden');
+      if (e.target === deleteEventModal) deleteEventModal.classList.add('hidden');
+      if (e.target === eventDetailsModal) eventDetailsModal.classList.add('hidden');
+    });
+  
+    function filterPlayers() {
+      const teamFilter = document.getElementById('playerTeamFilter').value;
+      const attendanceFilter = document.getElementById('attendanceFilter').value;
+      const rows = document.querySelectorAll('.player-row');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const teamId = row.dataset.teamId;
+        const attendance = row.dataset.attendance; // 'present', 'absent', 'none'
+        
+        // Team Filter Logic
+        let showTeam = (teamFilter === 'all') || (teamId === teamFilter);
+        
+        // Attendance Filter Logic
+        let showAtt = true;
+        if (attendanceFilter !== 'all') {
+             if (attendanceFilter === 'no_record') {
+                 showAtt = (attendance === 'none');
+             } else {
+                 showAtt = (attendance === attendanceFilter);
+             }
+        }
+
+        if (showTeam && showAtt) {
+          row.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+      
+      const noMsg = document.getElementById('noPlayersMessage');
+      if (noMsg) {
+          if (visibleCount === 0) noMsg.classList.remove('hidden');
+          else noMsg.classList.add('hidden');
+      }
+    }
+
+  </script>
+</body>
+
+</html>

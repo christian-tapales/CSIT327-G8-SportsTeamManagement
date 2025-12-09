@@ -6,7 +6,7 @@ import dj_database_url
 # ===========================
 # LOAD ENV VARIABLES
 # ===========================
-load_dotenv() 
+load_dotenv()  # Load environment variables from a .env file
 
 # ===========================
 # BASE DIRECTORY
@@ -36,8 +36,7 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 # ===========================
 # DATABASE CONFIGURATION
 # ===========================
-# Allow a local SQLite fallback for development when DEBUG=True
-USE_LOCAL_SQLITE = os.getenv('USE_LOCAL_SQLITE', 'True') == 'True'
+USE_LOCAL_SQLITE = os.getenv('USE_LOCAL_SQLITE', 'False') == 'True'
 
 if DEBUG and USE_LOCAL_SQLITE:
     DATABASES = {
@@ -54,7 +53,7 @@ else:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=600,
+            conn_max_age=0,
             ssl_require=True
         )
     }
@@ -69,8 +68,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "team_mgmt",
-    "coach",
+    "team_mgmt",  # Your app for team management
+    "coach",      # Your app for coach-related functionality
 ]
 
 # ===========================
@@ -78,7 +77,7 @@ INSTALLED_APPS = [
 # ===========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # For serving static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -99,7 +98,7 @@ WSGI_APPLICATION = "team_mgmt.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "templates"],  # Ensure the correct path to your templates folder
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -139,6 +138,22 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ===========================
+# MEDIA FILES (Uploads)
+# ===========================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ===========================
 # DEFAULT PRIMARY KEY
 # ===========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ===========================
+# SECURITY SETTINGS (Optional but recommended)
+# ===========================
+SECURE_SSL_REDIRECT = not DEBUG  # Redirect all HTTP to HTTPS in production
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+CSRF_COOKIE_SECURE = not DEBUG  # Use HTTPS for CSRF cookies in production
+SESSION_COOKIE_SECURE = not DEBUG  # Use HTTPS for session cookies in production
