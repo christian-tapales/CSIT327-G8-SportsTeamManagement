@@ -357,8 +357,7 @@
                     </span>
                   </div>
                   <h4 class="text-lg font-bold text-gray-900 truncate">
-                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title
-                    }} {% endif %}
+                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title }} {% endif %}
                   </h4>
                   <div class="flex items-center gap-4 mt-1 text-sm text-gray-500 font-medium">
                     <span>{{ event.time|time:"g:i A" }}</span>
@@ -402,8 +401,8 @@
                 </div>
                 <div class="flex-1">
                   <h4 class="text-lg font-bold text-gray-700">
-                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title
-                    }} {% endif %}
+                    {% if event.event_type == 'Game' %} vs. {{ event.opponent|default:"TBD" }} {% else %} {{ event.title }} {% endif %}
+
                   </h4>
                   <p class="text-sm text-gray-500 mt-1">{{ event.location }} • {{ event.time|time:"g:i A" }}</p>
                 </div>
@@ -951,6 +950,25 @@
     </div>
   </div>
 
+  <!-- Error Modal -->
+  <div id="errorModal"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center transform transition-all scale-100">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Error!</h3>
+      <p id="errorMessage" class="text-gray-500 mb-6">An error occurred.</p>
+      <button id="closeErrorModal"
+        class="w-full py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors">
+        Close
+      </button>
+    </div>
+  </div>
+
   {{ events_json|json_script:"events-data" }}
   {{ players_by_team|json_script:"players-data" }}
   <script>
@@ -1332,7 +1350,28 @@
       const dateVal = document.getElementById('statsDateInput').value;
 
       if (!teamId) {
-        alert("Please select a team.");
+        showErrorModal("Please select a team.");
+        return;
+      }
+
+      // VALIDATION: Win/Loss
+      if (winLossState.value !== 'win' && winLossState.value !== 'loss') {
+        showErrorModal("Please select either Win or Loss.");
+        return;
+      }
+
+      // VALIDATION: Blank Inputs
+      // We allow '0', but not empty string.
+      const validationInputs = document.querySelectorAll('#statsTableBody input');
+      let hasBlank = false;
+      validationInputs.forEach(inp => {
+        if (inp.value.trim() === '') {
+          hasBlank = true;
+        }
+      });
+
+      if (hasBlank) {
+        showErrorModal("Please fill in all statistics fields. Use 0 if there are no stats.");
         return;
       }
 
@@ -1371,11 +1410,11 @@
         if (res.success) {
           showSuccessModal('Stats saved successfully!');
         } else {
-          alert('Error saving stats: ' + res.error);
+          showErrorModal('Error saving stats: ' + res.error);
         }
       } catch (err) {
         console.error(err);
-        alert('Error saving stats.');
+        showErrorModal('Error saving stats.');
       }
     });
 
@@ -1536,8 +1575,10 @@
       }
     }
 
-    // 2.6 Success Modal
+    // 2.6 Success & Error Modal
     const successModal = document.getElementById('successModal');
+    const errorModal = document.getElementById('errorModal');
+
     function showSuccessModal(msg) {
       if (successModal) {
         const msgEl = document.getElementById('successMessage');
@@ -1546,10 +1587,25 @@
       }
     }
 
+    function showErrorModal(msg) {
+      if (errorModal) {
+        const msgEl = document.getElementById('errorMessage');
+        if (msgEl) msgEl.textContent = msg;
+        errorModal.classList.remove('hidden');
+      }
+    }
+
     const closeSuccessBtn = document.getElementById('closeSuccessModal');
     if (closeSuccessBtn) {
       closeSuccessBtn.addEventListener('click', () => {
         successModal.classList.add('hidden');
+      });
+    }
+
+    const closeErrorBtn = document.getElementById('closeErrorModal');
+    if (closeErrorBtn) {
+      closeErrorBtn.addEventListener('click', () => {
+        errorModal.classList.add('hidden');
       });
     }
 
@@ -1577,11 +1633,11 @@
           if (resp.ok) {
             showSuccessModal("Attendance saved successfully!");
           } else {
-            alert("Failed to save.");
+            showErrorModal("Failed to save.");
           }
         } catch (e) {
           console.error(e);
-          alert("Error saving.");
+          showErrorModal("Error saving.");
         }
       });
     }
@@ -1704,7 +1760,7 @@
       if (e.target === deleteEventModal) deleteEventModal.classList.add('hidden');
       if (e.target === eventDetailsModal) eventDetailsModal.classList.add('hidden');
     });
-  
+
     function filterPlayers() {
       const teamFilter = document.getElementById('playerTeamFilter').value;
       const attendanceFilter = document.getElementById('attendanceFilter').value;
@@ -1714,18 +1770,18 @@
       rows.forEach(row => {
         const teamId = row.dataset.teamId;
         const attendance = row.dataset.attendance; // 'present', 'absent', 'none'
-        
+
         // Team Filter Logic
         let showTeam = (teamFilter === 'all') || (teamId === teamFilter);
-        
+
         // Attendance Filter Logic
         let showAtt = true;
         if (attendanceFilter !== 'all') {
-             if (attendanceFilter === 'no_record') {
-                 showAtt = (attendance === 'none');
-             } else {
-                 showAtt = (attendance === attendanceFilter);
-             }
+          if (attendanceFilter === 'no_record') {
+            showAtt = (attendance === 'none');
+          } else {
+            showAtt = (attendance === attendanceFilter);
+          }
         }
 
         if (showTeam && showAtt) {
@@ -1735,11 +1791,11 @@
           row.classList.add('hidden');
         }
       });
-      
+
       const noMsg = document.getElementById('noPlayersMessage');
       if (noMsg) {
-          if (visibleCount === 0) noMsg.classList.remove('hidden');
-          else noMsg.classList.add('hidden');
+        if (visibleCount === 0) noMsg.classList.remove('hidden');
+        else noMsg.classList.add('hidden');
       }
     }
 
