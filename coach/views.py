@@ -765,22 +765,38 @@ def event_stats(request, event_id):
         stats[ps.player.id] = {
             'player_id': ps.player.id,
             'player_name': ps.player.name,
-            'two_pt_made': ps.two_pt_made,
-            'two_pt_attempt': ps.two_pt_attempt,
-            'three_pt_made': ps.three_pt_made,
-            'three_pt_attempt': ps.three_pt_attempt,
-            'ft_made': ps.ft_made,
-            'ft_attempt': ps.ft_attempt,
-            'rebounds': ps.rebounds,
-            'assists': ps.assists,
-            'steals': ps.steals,
-            'blocks': ps.blocks,
-            'turnovers': ps.turnovers,
+            # Basketball
+            'two_pt_made': ps.two_pt_made, 'two_pt_attempt': ps.two_pt_attempt,
+            'three_pt_made': ps.three_pt_made, 'three_pt_attempt': ps.three_pt_attempt,
+            'ft_made': ps.ft_made, 'ft_attempt': ps.ft_attempt,
+            'rebounds': ps.rebounds, 'assists': ps.assists,
+            'steals': ps.steals, 'blocks': ps.blocks, 'turnovers': ps.turnovers,
+            # Soccer
+            'goals': ps.goals, 'shots': ps.shots, 'shots_on_target': ps.shots_on_target,
+            'saves': ps.saves, 'tackles': ps.tackles, 'fouls': ps.fouls,
+            'yellow_cards': ps.yellow_cards, 'red_cards': ps.red_cards,
+            # Football
+            'pass_completions': ps.pass_completions, 'pass_attempts': ps.pass_attempts,
+            'passing_yards': ps.passing_yards, 'touchdowns': ps.touchdowns,
+            'interceptions': ps.interceptions, 'rushing_yards': ps.rushing_yards,
+            'receptions': ps.receptions, 'receiving_yards': ps.receiving_yards, 'sacks': ps.sacks,
+            # Baseball
+            'at_bats': ps.at_bats, 'hits': ps.hits, 'runs': ps.runs, 'rbis': ps.rbis,
+            'home_runs': ps.home_runs, 'strikeouts': ps.strikeouts, 'walks': ps.walks, 'stolen_bases': ps.stolen_bases,
+            # Volleyball
+            'kills': ps.kills, 'attacks': ps.attacks, 'aces': ps.aces, 'digs': ps.digs, 'errors': ps.errors,
+            # Tennis
+            'double_faults': ps.double_faults, 'winners': ps.winners, 'unforced_errors': ps.unforced_errors, 'break_points_won': ps.break_points_won,
+            # Swimming
+            'strokes': ps.strokes, 'splits': ps.splits, 'place': ps.place,
+            # Track & Field
+            'time_seconds': ps.time_seconds, 'distance_meters': ps.distance_meters, 'height_meters': ps.height_meters, 'attempts': ps.attempts,
         }
 
     game_data = {
         'id': game.id,
         'team_id': game.team.id,
+        'sport': game.team.sport,
         'date': game.date.strftime('%Y-%m-%d'),
         'opponent': game.opponent,
         'title': game.title,
