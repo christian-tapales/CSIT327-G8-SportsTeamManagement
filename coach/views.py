@@ -72,34 +72,34 @@ def register_view(request):
         email = (request.POST.get("email") or "").strip().lower()
         password1 = request.POST.get("password1") or ""
         password2 = request.POST.get("password2") or ""
-        sport = (request.POST.get("sport") or "").strip()
+
 
         # VALIDATIONS
-        if not all([username, first_name, last_name, email, password1, password2, sport]):
+        if not all([username, first_name, last_name, email, password1, password2]):
             messages.error(request, "Please fill in all fields.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         try:
             validate_email(email)
         except ValidationError:
             messages.error(request, "Invalid email address.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         if len(password1) < 8:
             messages.error(request, "Password must be at least 8 characters.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         if User.objects.filter(username__iexact=username).exists():
             messages.error(request, "Username already taken.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         if User.objects.filter(email__iexact=email).exists():
             messages.error(request, "Email already in use.")
-            return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+            return render(request, "auth/register.html")
 
         # CREATE USER
         user = User.objects.create_user(
@@ -110,12 +110,12 @@ def register_view(request):
             password=password1,
         )
 
-        CoachProfile.objects.create(user=user, sport=sport)
+        CoachProfile.objects.create(user=user, sport="Other")
 
         messages.success(request, "Account created successfully! Please sign in below.")
         return redirect("login")
 
-    return render(request, "auth/register.html", {"sport_choices": CoachProfile.SPORT_CHOICES})
+    return render(request, "auth/register.html")
 
 
 # ===============================

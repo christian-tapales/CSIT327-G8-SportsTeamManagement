@@ -1,11 +1,13 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>Sign Up • Sports Team Management</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
   <main class="w-full max-w-md">
     <div class="bg-white shadow-xl rounded-2xl p-8">
@@ -17,21 +19,21 @@
       <!-- Tabs -->
       <div class="mt-6 flex gap-6 border-b">
         <a href="{% url 'login' %}"
-           class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'login' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
+          class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'login' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
           Sign In
         </a>
         <a href="{% url 'register' %}"
-           class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'register' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
+          class="pb-2 text-sm font-medium {% if request.resolver_match.url_name == 'register' %}border-b-2 border-gray-900 text-gray-900{% else %}text-gray-500{% endif %}">
           Sign Up
         </a>
       </div>
 
       {% if messages %}
-        <ul class="mt-4 space-y-2">
-          {% for m in messages %}
-            <li class="text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">{{ m }}</li>
-          {% endfor %}
-        </ul>
+      <ul class="mt-4 space-y-2">
+        {% for m in messages %}
+        <li class="text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">{{ m }}</li>
+        {% endfor %}
+      </ul>
       {% endif %}
 
       <form method="post" action="{% url 'register' %}" class="mt-6 space-y-4" novalidate>
@@ -40,61 +42,51 @@
         <label class="block">
           <span class="text-sm font-medium">Username</span>
           <input name="username" type="text" placeholder="yourusername"
-                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                 required />
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            required />
         </label>
 
-        <label class="block">
-  <span class="text-sm font-medium">Choose Sport</span>
-  <select name="sport"
-          class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-          required>
-    <option value="">Select your sport</option>
-    {% for code, label in sport_choices %}
-      <option value="{{ code }}">{{ label }}</option>
-    {% endfor %}
-  </select>
-</label>
+
 
         <label class="block">
           <span class="text-sm font-medium">Email</span>
           <input name="email" type="email" placeholder="you@example.com"
-                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                 required />
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            required />
         </label>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label class="block">
             <span class="text-sm font-medium">First name</span>
             <input name="first_name" type="text"
-                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                   required />
+              class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+              required />
           </label>
           <label class="block">
             <span class="text-sm font-medium">Last name</span>
             <input name="last_name" type="text"
-                   class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                   required />
+              class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+              required />
           </label>
         </div>
 
         <label class="block">
           <span class="text-sm font-medium">Password</span>
           <input id="pw1" name="password1" type="password" minlength="8" placeholder="At least 8 characters"
-                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                 required />
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            required />
         </label>
 
         <label class="block">
           <span class="text-sm font-medium">Confirm password</span>
           <input id="pw2" name="password2" type="password" placeholder="Re-enter your password"
-                 class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                 required />
+            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900"
+            required />
           <p id="pw-mismatch" class="hidden text-xs text-red-600 mt-1">Passwords do not match.</p>
         </label>
 
         <button type="submit"
-                class="w-full mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-white font-medium hover:bg-black">
+          class="w-full mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-white font-medium hover:bg-black">
           Sign Up
         </button>
       </form>
@@ -102,9 +94,10 @@
   </main>
 
   <script>
-    const a=document.getElementById('pw1'),b=document.getElementById('pw2'),w=document.getElementById('pw-mismatch');
-    function m(){ if(!a.value||!b.value){w.classList.add('hidden');return;} (a.value!==b.value)?w.classList.remove('hidden'):w.classList.add('hidden'); }
-    ['input','change'].forEach(e=>{a.addEventListener(e,m);b.addEventListener(e,m);});
+    const a = document.getElementById('pw1'), b = document.getElementById('pw2'), w = document.getElementById('pw-mismatch');
+    function m() { if (!a.value || !b.value) { w.classList.add('hidden'); return; } (a.value !== b.value) ? w.classList.remove('hidden') : w.classList.add('hidden'); }
+    ['input', 'change'].forEach(e => { a.addEventListener(e, m); b.addEventListener(e, m); });
   </script>
 </body>
+
 </html>
