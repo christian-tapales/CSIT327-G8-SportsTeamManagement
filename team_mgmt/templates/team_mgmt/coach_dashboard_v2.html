@@ -554,7 +554,7 @@
       </div>
 
       <!-- Dynamic Stats Box -->
-      <div id="statsContainer" class="hidden mt-8">
+      <div id="statsContainer" class="hidden mt-8 overflow-x-auto">
         <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
           <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
             <h3 class="font-semibold text-lg" id="statsHeaderTitle">Match Statistics</h3>
@@ -901,14 +901,24 @@
         </div>
 
         <!-- Stats Tab -->
-        <div id="content-stats" class="hidden flex flex-col items-center justify-center h-full text-center">
-          <div class="p-4 bg-gray-50 rounded-xl w-full">
-            <p class="text-gray-600 mb-4">Go to Statistics tab to manage detailed game stats.</p>
-            <button onclick="closeDetailModalAndGoToStats()"
-              class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-              Go to Statistics
-            </button>
-          </div>
+        <!-- Stats Tab -->
+        <div id="content-stats" class="hidden h-full flex flex-col">
+           <div id="eventStatsLoading" class="hidden flex flex-col items-center justify-center py-12">
+              <div class="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
+              <p class="text-gray-500">Loading statistics...</p>
+           </div>
+           <div id="eventStatsContent" class="hidden flex-1 overflow-auto">
+              <table class="w-full text-left text-sm">
+                 <thead class="bg-gray-100 border-b sticky top-0" id="eventStatsHeader">
+                 </thead>
+                 <tbody id="eventStatsBody" class="divide-y divide-gray-100">
+                 </tbody>
+              </table>
+              <div id="eventStatsEmpty" class="hidden text-center py-10 text-gray-500">
+                 <div class="text-4xl mb-2">📊</div>
+                 <p>No statistics recorded for this game yet.</p>
+              </div>
+           </div>
         </div>
 
       </div>
@@ -1146,50 +1156,51 @@
     }
 
     // --- STATISTICS LOGIC ---
-    const SPORTS_CONFIG = {
-      'Basketball': [
-        { key: 'two_pt_made', label: '2PT Made' },
-        { key: 'three_pt_made', label: '3PT Made' },
-        { key: 'ft_made', label: 'FT Made' },
-        { key: 'rebounds', label: 'REB' },
-        { key: 'assists', label: 'AST' },
-        { key: 'steals', label: 'STL' },
-        { key: 'blocks', label: 'BLK' },
-        { key: 'turnovers', label: 'TO' }
-      ],
-      'Soccer': [
-        { key: 'goals', label: 'Goals' },
-        { key: 'assists', label: 'Assists' },
-        { key: 'shots_on_target', label: 'SOT' },
-        { key: 'saves', label: 'Saves' },
-        { key: 'tackles', label: 'Tackles' },
-        { key: 'fouls', label: 'Fouls' },
-        { key: 'yellow_cards', label: 'Yellow' },
-        { key: 'red_cards', label: 'Red' }
-      ],
-      'Football': [
-        { key: 'touchdowns', label: 'TDs' },
-        { key: 'passing_yards', label: 'Pass Yds' },
-        { key: 'rushing_yards', label: 'Rush Yds' },
-        { key: 'receptions', label: 'Rec' },
-        { key: 'sacks', label: 'Sacks' },
-        { key: 'interceptions', label: 'INT' }
-      ],
-      'Baseball': [
-        { key: 'at_bats', label: 'AB' },
-        { key: 'hits', label: 'Hits' },
-        { key: 'runs', label: 'Runs' },
-        { key: 'home_runs', label: 'HR' },
-        { key: 'rbis', label: 'RBI' },
-        { key: 'strikeouts', label: 'K' }
-      ],
-      'Volleyball': [
-        { key: 'kills', label: 'Kills' },
-        { key: 'aces', label: 'Aces' },
-        { key: 'digs', label: 'Digs' },
-        { key: 'blocks', label: 'Blocks' },
-        { key: 'assists', label: 'Assists' }
-      ]
+        const SPORTS_CONFIG = {
+        'Basketball': [
+            { key: 'two_pt_made', label: 'Two Point Made' }, { key: 'two_pt_attempt', label: 'Two Point Attempt' },
+            { key: 'three_pt_made', label: 'Three Point Made' }, { key: 'three_pt_attempt', label: 'Three Point Attempt' },
+            { key: 'ft_made', label: 'Free Throw Made' }, { key: 'ft_attempt', label: 'Free Throw Attempt' },
+            { key: 'rebounds', label: 'Rebounds' }, { key: 'assists', label: 'Assists' },
+            { key: 'steals', label: 'Steals' }, { key: 'blocks', label: 'Blocks' }, { key: 'turnovers', label: 'Turnovers' }
+        ],
+        'Soccer': [
+            { key: 'goals', label: 'Goals' }, { key: 'assists', label: 'Assists' },
+            { key: 'shots_on_target', label: 'Shots on Target' }, { key: 'saves', label: 'Saves' },
+            { key: 'tackles', label: 'Tackles' }, { key: 'fouls', label: 'Fouls' },
+            { key: 'yellow_cards', label: 'Yellow Cards' }, { key: 'red_cards', label: 'Red Cards' }
+        ],
+        'Football': [
+            { key: 'touchdowns', label: 'Touchdowns' }, { key: 'passing_yards', label: 'Passing Yards' },
+            { key: 'pass_completions', label: 'Pass Completions' }, { key: 'pass_attempts', label: 'Pass Attempts' },
+            { key: 'rushing_yards', label: 'Rushing Yards' }, { key: 'receptions', label: 'Receptions' },
+            { key: 'receiving_yards', label: 'Receiving Yards' }, { key: 'sacks', label: 'Sacks' },
+            { key: 'interceptions', label: 'Interceptions' }
+        ],
+        'Baseball': [
+            { key: 'at_bats', label: 'At Bats' }, { key: 'hits', label: 'Hits' }, { key: 'runs', label: 'Runs' },
+            { key: 'rbis', label: 'RBIs' }, { key: 'home_runs', label: 'Home Runs' },
+            { key: 'strikeouts', label: 'Strikeouts' }, { key: 'walks', label: 'Walks' }, { key: 'stolen_bases', label: 'Stolen Bases' }
+        ],
+        'Volleyball': [
+            { key: 'kills', label: 'Kills' }, { key: 'aces', label: 'Aces' },
+            { key: 'digs', label: 'Digs' }, { key: 'blocks', label: 'Blocks' }, { key: 'assists', label: 'Assists' },
+            { key: 'errors', label: 'Errors' }
+        ],
+        'Tennis': [
+             { key: 'winners', label: 'Winners' }, { key: 'double_faults', label: 'Double Faults' },
+             { key: 'unforced_errors', label: 'Unforced Errors' }, { key: 'break_points_won', label: 'Break Points Won' }
+        ],
+        'Swimming': [
+             { key: 'strokes', label: 'Strokes' }, { key: 'splits', label: 'Splits' }, { key: 'place', label: 'Place' }
+        ],
+        'Track & Field': [
+             { key: 'time_seconds', label: 'Time (s)' }, { key: 'distance_meters', label: 'Distance (m)' },
+             { key: 'height_meters', label: 'Height (m)' }, { key: 'attempts', label: 'Attempts' }
+        ],
+         'Other': [
+             { key: 'score', label: 'Score' }
+        ]
     };
 
     const DEFAULT_STATS = [{ key: 'goals', label: 'Score/Points' }, { key: 'assists', label: 'Assists' }];
@@ -1299,7 +1310,7 @@
 
       const thead = document.getElementById('statsTableHead');
       // FIX: Backticks
-      thead.innerHTML = `<tr><th class="px-4 py-3 text-xs font-bold text-gray-500 uppercase">Player</th>${config.map(f => `<th class="px-2 py-3 text-xs font-bold text-gray-500 uppercase text-center">${f.label}</th>`).join('')}</tr>`;
+      thead.innerHTML = `<tr><th class="px-4 py-3 text-xs font-bold text-gray-500 uppercase">Player</th>${config.map(f => `<th class="px-2 py-3 text-xs font-bold text-gray-500 uppercase text-center whitespace-nowrap">${f.label}</th>`).join('')}</tr>`;
 
       const tbody = document.getElementById('statsTableBody');
       tbody.innerHTML = '';
@@ -1331,7 +1342,7 @@
           return `<td class="p-2 text-center"><input type="number" min="0" data-player="${p.id}" data-stat="${field.key}" value="${val}" class="w-16 h-9 text-center border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"></td>`;
         }).join('');
         // FIX: Backticks
-        const row = `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3"><div class="font-medium text-gray-900">${p.name}</div><div class="text-xs text-gray-500">#${p.jersey}</div></td>${inputsHtml}</tr>`;
+        const row = `<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 sticky left-0 bg-white z-10 border-r border-gray-100 shadow-sm"><div class="font-medium text-gray-900">${p.name}</div><div class="text-xs text-gray-500">#${p.jersey}</div></td>${inputsHtml}</tr>`;
         tbody.insertAdjacentHTML('beforeend', row);
       });
 
@@ -1452,7 +1463,7 @@
 
     // 2.5 Event Details Modal Logic
     const eventDetailsModal = document.getElementById('eventDetailsModal');
-    function openEventDetails(eventId) {
+    function openEventDetails(eventId) { currentDetailEventId = eventId;
       console.log("DEBUG: openEventDetails called");
       // Find event
       const allEvents = calendarEvents;
@@ -1648,8 +1659,6 @@
       const attendance = document.getElementById('content-attendance');
       const stats = document.getElementById('content-stats');
 
-
-
       if (details) details.classList.add('hidden');
       if (attendance) attendance.classList.add('hidden');
       if (stats) stats.classList.add('hidden');
@@ -1672,6 +1681,11 @@
       if (selectedBtn) {
         selectedBtn.classList.remove('text-gray-500', 'font-medium');
         selectedBtn.classList.add('border-b-2', 'border-black', 'text-gray-900', 'font-semibold');
+      }
+
+      // TRIGGER LOAD IF STATS
+      if (tabName === 'stats' && currentDetailEventId) {
+          loadEventStats(currentDetailEventId);
       }
     }
 
@@ -1797,6 +1811,116 @@
         if (visibleCount === 0) noMsg.classList.remove('hidden');
         else noMsg.classList.add('hidden');
       }
+    }
+
+
+    // --- EVENT STATS LOGIC (INJECTED) ---
+    let currentDetailEventId = null;
+
+        const sportStatsColumns = {
+        'Basketball': [
+            { key: 'two_pt_made', label: 'Two Point Made' }, { key: 'two_pt_attempt', label: 'Two Point Attempt' },
+            { key: 'three_pt_made', label: 'Three Point Made' }, { key: 'three_pt_attempt', label: 'Three Point Attempt' },
+            { key: 'ft_made', label: 'Free Throw Made' }, { key: 'ft_attempt', label: 'Free Throw Attempt' },
+            { key: 'rebounds', label: 'Rebounds' }, { key: 'assists', label: 'Assists' },
+            { key: 'steals', label: 'Steals' }, { key: 'blocks', label: 'Blocks' }, { key: 'turnovers', label: 'Turnovers' }
+        ],
+        'Soccer': [
+            { key: 'goals', label: 'Goals' }, { key: 'assists', label: 'Assists' },
+            { key: 'shots_on_target', label: 'Shots on Target' }, { key: 'saves', label: 'Saves' },
+            { key: 'tackles', label: 'Tackles' }, { key: 'fouls', label: 'Fouls' },
+            { key: 'yellow_cards', label: 'Yellow Cards' }, { key: 'red_cards', label: 'Red Cards' }
+        ],
+        'Football': [
+            { key: 'touchdowns', label: 'Touchdowns' }, { key: 'passing_yards', label: 'Passing Yards' },
+            { key: 'pass_completions', label: 'Pass Completions' }, { key: 'pass_attempts', label: 'Pass Attempts' },
+            { key: 'rushing_yards', label: 'Rushing Yards' }, { key: 'receptions', label: 'Receptions' },
+            { key: 'receiving_yards', label: 'Receiving Yards' }, { key: 'sacks', label: 'Sacks' },
+            { key: 'interceptions', label: 'Interceptions' }
+        ],
+        'Baseball': [
+            { key: 'at_bats', label: 'At Bats' }, { key: 'hits', label: 'Hits' }, { key: 'runs', label: 'Runs' },
+            { key: 'rbis', label: 'RBIs' }, { key: 'home_runs', label: 'Home Runs' },
+            { key: 'strikeouts', label: 'Strikeouts' }, { key: 'walks', label: 'Walks' }, { key: 'stolen_bases', label: 'Stolen Bases' }
+        ],
+        'Volleyball': [
+            { key: 'kills', label: 'Kills' }, { key: 'aces', label: 'Aces' },
+            { key: 'digs', label: 'Digs' }, { key: 'blocks', label: 'Blocks' }, { key: 'assists', label: 'Assists' },
+            { key: 'errors', label: 'Errors' }
+        ],
+        'Tennis': [
+             { key: 'winners', label: 'Winners' }, { key: 'double_faults', label: 'Double Faults' },
+             { key: 'unforced_errors', label: 'Unforced Errors' }, { key: 'break_points_won', label: 'Break Points Won' }
+        ],
+        'Swimming': [
+             { key: 'strokes', label: 'Strokes' }, { key: 'splits', label: 'Splits' }, { key: 'place', label: 'Place' }
+        ],
+        'Track & Field': [
+             { key: 'time_seconds', label: 'Time (s)' }, { key: 'distance_meters', label: 'Distance (m)' },
+             { key: 'height_meters', label: 'Height (m)' }, { key: 'attempts', label: 'Attempts' }
+        ],
+         'Other': [
+             { key: 'score', label: 'Score' }
+        ]
+    };
+
+    function loadEventStats(eventId) {
+        const container = document.getElementById('eventStatsContent');
+        const loading = document.getElementById('eventStatsLoading');
+        const empty = document.getElementById('eventStatsEmpty');
+        const thead = document.getElementById('eventStatsHeader');
+        const tbody = document.getElementById('eventStatsBody');
+
+        if(loading) loading.classList.remove('hidden');
+        if(container) container.classList.add('hidden');
+        if(empty) empty.classList.add('hidden');
+
+        fetch(`/coach/event/${eventId}/stats/`)
+            .then(res => res.json())
+            .then(data => {
+                if(loading) loading.classList.add('hidden');
+                if(container) container.classList.remove('hidden');
+
+                if (!data.game || Object.keys(data.stats).length === 0) {
+                    if(empty) empty.classList.remove('hidden');
+                    if(tbody) tbody.innerHTML = '';
+                    if(thead) thead.innerHTML = '';
+                    return;
+                }
+
+                const sport = data.game.sport || 'Basketball';
+                const columns = sportStatsColumns[sport] || sportStatsColumns['Basketball'];
+                
+                // Build Header
+                let headerHtml = '<tr><th class="px-4 py-2 font-semibold text-gray-700 whitespace-nowrap sticky left-0 bg-gray-100 z-10">Player</th>';
+                columns.forEach(col => {
+                    headerHtml += `<th class="px-4 py-2 font-semibold text-gray-700 text-center whitespace-nowrap">${col.label}</th>`;
+                });
+                headerHtml += '</tr>';
+                if(thead) thead.innerHTML = headerHtml;
+
+                // Build Body
+                let bodyHtml = '';
+                Object.values(data.stats).forEach(playerStat => {
+                    bodyHtml += `<tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 font-medium text-gray-900 border-b border-gray-100 whitespace-nowrap sticky left-0 bg-white z-10 shadow-sm">${playerStat.player_name || 'Unknown'}</td>`;
+                    
+                    columns.forEach(col => {
+                        const val = playerStat[col.key] || 0;
+                        bodyHtml += `<td class="px-4 py-3 text-center text-gray-600 border-b border-gray-100 whitespace-nowrap">${val}</td>`;
+                    });
+                    bodyHtml += '</tr>';
+                });
+                if(tbody) tbody.innerHTML = bodyHtml;
+            })
+            .catch(err => {
+                console.error(err);
+                if(loading) loading.classList.add('hidden');
+                if(empty) {
+                    empty.textContent = "Error loading stats.";
+                    empty.classList.remove('hidden');
+                }
+            });
     }
 
   </script>
