@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import PasswordChangeForm
 from django.utils import timezone
 from django.urls import reverse
+from django.db import models
 from .models import Player, Team, CoachProfile, Event, Attendance, PlayerStat, Game
 
 
@@ -341,9 +342,18 @@ def team_detail(request, team_id):
     wins = games.filter(is_win=True).count()
     losses = games.filter(is_win=False).count()
 
+    # Calculate Attendance Ratio
+    total_events = Event.objects.filter(team=team).count()
+    player_attendance = Attendance.objects.filter(event__team=team, present=True).values('player').annotate(count=models.Count('player'))
+    attendance_map = {item['player']: item['count'] for item in player_attendance}
+
+    for p in players:
+        present_count = attendance_map.get(p.id, 0)
+        p.attendance_ratio = f"{present_count}/{total_events}" if total_events > 0 else "0/0"
+
     return render(
         request,
-        "team_mgmt/team_detail.html",
+        "team_mgmt/team_detail_final.html",
         {
             "team": team,
             "players": players,

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import dj_database_url
 
 # ===========================
-# LOAD ENV VARIABLES
+# LOAD ENV VARIABLES (UPDATED)
 # ===========================
 load_dotenv()  # Load environment variables from a .env file
 
